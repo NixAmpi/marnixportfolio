@@ -58,10 +58,13 @@ export const projects: Project[] = [
     slug: "agriconnect",
     title: "AgriConnect",
     category: "Web Application",
-    summary: "TODO: one-line description of AgriConnect",
-    description: "TODO: one-line description of AgriConnect",
-    tags: ["TODO: tags"],
-    githubUrl: "TODO: link to the AgriConnect repository",
+    summary:
+      "An online marketplace that connects Filipino farmers directly with buyers — fresh produce for buyers, fair prices for farmers.",
+    description:
+      "An online marketplace that connects Filipino farmers directly with buyers — fresh produce for buyers, fair prices for farmers.",
+    tags: ["HTML", "CSS", "JavaScript", "Supabase"],
+    githubUrl: "https://github.com/NixAmpi/Agriconnect",
+    // liveUrl: add the deployed URL here to show the "Visit Site" button.
     thumbnail: "/projects/agriconnect/home.webp",
     screenshotFrame: "browser",
     gallery: [
@@ -72,14 +75,36 @@ export const projects: Project[] = [
       { src: "/projects/agriconnect/farmers.webp", alt: "Meet our farmers: testimonials from partner farmers", caption: "Meet our farmers" },
       { src: "/projects/agriconnect/for-farmers.webp", alt: "For farmers banner: grow your income, sell directly to buyers", caption: "For farmers" },
     ],
-    role: "TODO: your role",
-    overview: "TODO: overview of AgriConnect.",
-    problem: "TODO: the problem AgriConnect addresses.",
-    solution: "TODO: how AgriConnect solves it.",
-    features: ["TODO: key features of AgriConnect."],
-    stack: ["TODO: technology stack"],
-    process: ["TODO: development steps for AgriConnect."],
-    result: "TODO: outcome of AgriConnect.",
+    overview:
+      "AgriConnect is a farm-to-buyer e-commerce website for Filipino agricultural produce. Buyers can browse fruits, vegetables, rice, coffee, and more, see which farmer and province each product comes from, and place real orders. Farmers get a public profile that tells their story and lists their products.",
+    problem:
+      "Small Filipino farmers often sell through middlemen who take a large share of the price, so farmers earn less and buyers pay more. Buyers also rarely know where their produce comes from, how fresh it is, or who grew it.",
+    solution:
+      "AgriConnect cuts out the middleman by letting farmers list produce directly and buyers order straight from them. Every product shows its farmer, province, harvest date, and stock. Secure accounts, real-time inventory, and a server-side checkout keep orders accurate and trustworthy.",
+    features: [
+      "Buyer and Seller accounts with sign-up, login, email confirmation, and password reset (Supabase Auth)",
+      "Seller farm profile created automatically at sign-up",
+      "Shop with search, category filters, and sorting",
+      'Product pages with photo, price, stock, harvest date, and a "Grown by" farmer card',
+      "Farmer profiles with farm story, province, average rating, and all their products",
+      "Cart drawer and checkout with Philippine mobile number validation and delivery fee rules",
+      "Secure order placement through a database function that checks prices and stock in one step",
+      "Product reviews with a star breakdown (write, edit, delete; sellers can't review their own products)",
+      "Wishlist saved to the buyer's account",
+      "Row Level Security on every database table",
+    ],
+    stack: ["HTML5", "CSS3", "JavaScript", "Supabase", "PostgreSQL", "Supabase Auth", "Row Level Security", "Formspree"],
+    process: [
+      "Planned the marketplace flow for two user types: buyers and sellers (farmers)",
+      "Designed the database schema in PostgreSQL: profiles, farms, products, orders, reviews, and wishlist",
+      "Built the responsive multi-page front end in plain HTML, CSS, and JavaScript with shared modules for cart, auth, and products",
+      "Integrated Supabase Auth for accounts and Row Level Security for data protection",
+      "Wrote a place_order() database function to handle pricing, stock checks, and delivery fees server-side",
+      "Added reviews, wishlist, and farmer profile features through database migrations",
+      "Tested the buying flow, loading and error states, and mobile layouts",
+    ],
+    result:
+      "Delivered a fully working farm-to-buyer marketplace with 8 responsive pages, 13 sample products across 6 produce categories, and a secure Supabase backend of 8 database tables protected by Row Level Security. Buyers can browse, review, wishlist, and place real orders with live stock checks, while every product traces back to the farmer and province that grew it. The project strengthened my skills in full-stack web development, relational database design, authentication, and building secure server-side logic without a framework.",
   },
   {
     slug: "flood-awareness",
