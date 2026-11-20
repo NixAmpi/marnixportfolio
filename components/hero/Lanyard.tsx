@@ -24,6 +24,22 @@ import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
 
+/**
+ * MeshLine's vertex shader detects a line's end points with an exact float compare
+ * (`nextP == currentP`). The two sides are computed slightly differently, so the compare
+ * fails on rounding error, the end direction is taken from a near-zero vector, and the strap's
+ * cut flips to a random angle every frame (sometimes collapsing into a spike). Compare with a
+ * tolerance instead.
+ */
+function fixMeshLineEnds(material: MeshLineMaterial | null) {
+  if (!material || material.userData.endsFixed) return;
+  material.vertexShader = material.vertexShader
+    .replace("if (nextP == currentP)", "if (distance(nextP, currentP) < 1e-5)")
+    .replace("else if (prevP == currentP)", "else if (distance(prevP, currentP) < 1e-5)");
+  material.userData.endsFixed = true;
+  material.needsUpdate = true;
+}
+
 declare module "@react-three/fiber" {
   interface ThreeElements {
     meshLineGeometry: ThreeElement<typeof MeshLineGeometry>;
@@ -44,6 +60,18 @@ const LAYOUTS: Record<"desktop" | "compact", Layout> = {
 
 const CARD = { width: 1.6, height: 2.25, depth: 0.02 };
 const CARD_JOINT_Y = 1.45;
+
+// Clip + ring hardware, in card-local units. The ring's bottom overlaps the clip's top by
+// RING_OVERLAP so they read as one attached piece. Both sit HARDWARE_Z toward the camera
+// so they always draw in front of the strap's end.
+const CLIP = { w: 0.24, h: 0.16, d: 0.05, y: CARD.height / 2 + 0.05 };
+const RING = { radius: 0.08, tube: 0.02 };
+const RING_OVERLAP = 0.02;
+const RING_Y = CLIP.y + CLIP.h / 2 + RING.radius + RING.tube - RING_OVERLAP;
+const HARDWARE_Z = 0.01;
+// The strap leaves the ring straight along the card's up axis for this long before curving.
+const STRAP_LEAD = 0.18;
+const TAIL_STEPS = 8;
 
 export type LanyardProps = {
   compact: boolean;
@@ -91,7 +119,8 @@ const segmentProps: RigidBodyProps = {
 
 function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layout; onReady?: () => void; maxSpeed?: number; minSpeed?: number }) {
   const band = useRef<THREE.Mesh<MeshLineGeometry, MeshLineMaterial>>(null);
-  const ring = useRef<THREE.Mesh>(null);
+  const ringAnchor = useRef<THREE.Group>(null);
+  const leadAnchor = useRef<THREE.Group>(null);
   const fixed = useRef<RapierRigidBody>(null!);
   const j1 = useRef<RapierRigidBody>(null!);
   const j2 = useRef<RapierRigidBody>(null!);
@@ -100,7 +129,7 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layou
   const lerped = useRef<{ j1?: THREE.Vector3; j2?: THREE.Vector3 }>({});
 
   const tmp = useMemo(
-    () => ({ vec: new THREE.Vector3(), ang: new THREE.Vector3(), dir: new THREE.Vector3() }),
+    () => ({ vec: new THREE.Vector3(), ang: new THREE.Vector3(), dir: new THREE.Vector3(), end: new THREE.Vector3(), lead: new THREE.Vector3() }),
     [],
   );
   const [curve] = useState(
@@ -145,8 +174,8 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layou
   }, [hovered, dragged]);
 
   useFrame((state, delta) => {
-    const [f, a, b, c, body, line, ringMesh] = [fixed.current, j1.current, j2.current, j3.current, card.current, band.current, ring.current];
-    if (!f || !a || !b || !c || !body || !line || !ringMesh) return;
+    const [f, a, b, c, body, line, anchor, leadEl] = [fixed.current, j1.current, j2.current, j3.current, card.current, band.current, ringAnchor.current, leadAnchor.current];
+    if (!f || !a || !b || !c || !body || !line || !anchor || !leadEl) return;
     // A long frame (tab switch, GC pause) must not fling the eased links.
     const dt = Math.min(delta, 1 / 30);
 
@@ -167,14 +196,23 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layou
       l.lerp(t, Math.min(1, dt * (minSpeed + dist * (maxSpeed - minSpeed))));
     }
 
-    // Anchor the strap's bottom to where the ring is actually drawn this frame
-    // (the interpolated mesh), not the raw physics body, so the two never drift apart.
-    ringMesh.updateWorldMatrix(true, false);
-    ringMesh.getWorldPosition(curve.points[0]);
-    curve.points[1].copy(lerped.current.j2!);
-    curve.points[2].copy(lerped.current.j1!);
-    curve.points[3].copy(f.translation());
-    line.geometry.setPoints(curve.getPoints(32));
+    // Top → bottom: fixed anchor, eased middle links, then two points rigidly on the card.
+    // Both come from the *rendered* (interpolated) card pose and are never eased, so the strap
+    // ends exactly on the ring's top bar every frame. Because the last stretch runs along the
+    // card's up axis, the strap's cut stays parallel to the ring bar (hidden behind it) instead
+    // of flipping angle as the middle links lag.
+    anchor.updateWorldMatrix(true, false);
+    anchor.getWorldPosition(tmp.end);
+    leadEl.getWorldPosition(tmp.lead);
+    curve.points[0].copy(f.translation());
+    curve.points[1].copy(lerped.current.j1!);
+    curve.points[2].copy(lerped.current.j2!);
+    curve.points[3].copy(tmp.lead);
+    // The spline stops at the lead point; the last stretch to the ring is a straight tail, so it
+    // can't overshoot past the ring and fold back (which showed as a sliver inside the ring).
+    const pts = curve.getPoints(56);
+    for (let k = 1; k <= TAIL_STEPS; k++) pts.push(new THREE.Vector3().lerpVectors(tmp.lead, tmp.end, k / TAIL_STEPS));
+    line.geometry.setPoints(pts);
 
     // Gently turn the card back to face the camera.
     tmp.ang.copy(body.angvel());
@@ -233,28 +271,34 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layou
               <planeGeometry args={[CARD.width, CARD.height]} />
               <meshBasicMaterial map={back} toneMapped={false} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
             </mesh>
-            {/* metal clip + ring */}
-            <mesh position={[0, CARD.height / 2 + 0.05, 0]}>
-              <boxGeometry args={[0.24, 0.16, 0.05]} />
+            {/* Metal clip + ring: children of the card body, so they move as one rigid piece. */}
+            <mesh position={[0, CLIP.y, HARDWARE_Z]} renderOrder={2}>
+              <boxGeometry args={[CLIP.w, CLIP.h, CLIP.d]} />
               <meshStandardMaterial color="#c9ced8" metalness={1} roughness={0.3} />
             </mesh>
-            <mesh ref={ring} position={[0, CARD_JOINT_Y - 0.08, 0]}>
-              <torusGeometry args={[0.08, 0.02, 12, 32]} />
+            <mesh position={[0, RING_Y, HARDWARE_Z]} renderOrder={2}>
+              <torusGeometry args={[RING.radius, RING.tube, 16, 48]} />
               <meshStandardMaterial color="#c9ced8" metalness={1} roughness={0.3} />
             </mesh>
+            {/* Where the strap ends: the centre line of the ring's top bar (behind the ring). */}
+            <group ref={ringAnchor} position={[0, RING_Y + RING.radius, 0]} />
+            <group ref={leadAnchor} position={[0, RING_Y + RING.radius + STRAP_LEAD, 0]} />
           </group>
         </RigidBody>
       </group>
-      <mesh ref={band}>
+      <mesh ref={band} renderOrder={1}>
         <meshLineGeometry />
         <meshLineMaterial
+          ref={fixMeshLineEnds}
           color="white"
           transparent
-          depthTest={false}
+          depthTest
+          depthWrite={false}
           resolution={[size.width, size.height]}
           useMap={1}
           map={strap}
-          repeat={[-4, 1]}
+          // Curve now runs top → bottom; the positive repeat keeps the pattern identical to before.
+          repeat={[4, 1]}
           lineWidth={1}
         />
       </mesh>
