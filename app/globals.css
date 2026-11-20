@@ -117,6 +117,27 @@ html.lenis {
   scroll-behavior: auto;
 }
 
+/* ---------- custom cursor (desktop only; see components/effects/Cursor.tsx) ---------- */
+
+html.has-custom-cursor,
+html.has-custom-cursor * {
+  cursor: none !important;
+}
+
+html.has-custom-cursor :is(input, textarea, [contenteditable="true"]) {
+  cursor: text !important;
+}
+
+.cursor-ring-hover .cursor-ring {
+  transform: scale(1.8);
+  border-color: rgb(34 211 238 / 0.8);
+  background-color: rgb(34 211 238 / 0.08);
+}
+
+.cursor-ring-down .cursor-ring {
+  transform: scale(0.8);
+}
+
 /* ---------- grain ---------- */
 
 .grain {

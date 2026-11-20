@@ -4,6 +4,7 @@ import { Loader } from "@/components/Loader";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { Cursor } from "@/components/effects/Cursor";
 import { Grain } from "@/components/effects/Grain";
 import { ScrollProgress } from "@/components/effects/ScrollProgress";
 import { SmoothScroll } from "@/components/effects/SmoothScroll";
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SmoothScroll />
         <ScrollProgress />
         <Grain />
+        <Cursor />
         <MotionProvider>
           <Navbar />
           <main id="main">{children}</main>
