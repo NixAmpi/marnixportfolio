@@ -108,12 +108,15 @@ export const projects: Project[] = [
   },
   {
     slug: "flood-awareness",
-    title: "Flood Awareness",
+    title: "Flood Awareness Philippines",
     category: "Web Application",
-    summary: "TODO: one-line description of Flood Awareness",
-    description: "TODO: one-line description of Flood Awareness",
-    tags: ["TODO: tags"],
-    githubUrl: "TODO: link to the Flood Awareness repository",
+    summary:
+      "A flood-preparedness website that brings safety guides, emergency hotlines, evacuation resources, and flood updates together in one place for Filipino communities.",
+    description:
+      "A flood-preparedness website that brings safety guides, emergency hotlines, evacuation resources, and flood updates together in one place for Filipino communities.",
+    tags: ["TODO: tags (tech used, e.g. HTML, CSS, JavaScript)"],
+    githubUrl: "https://github.com/NixAmpi/Flood-awareness",
+    // liveUrl: add the deployed URL here to show the "Visit Site" button.
     thumbnail: "/projects/flood-awareness/home.webp",
     screenshotFrame: "browser",
     gallery: [
@@ -128,14 +131,37 @@ export const projects: Project[] = [
       { src: "/projects/flood-awareness/hotlines.webp", alt: "Emergency hotlines with call and copy-number buttons: 911, NDRRMC, PAGASA", caption: "Emergency hotlines" },
       { src: "/projects/flood-awareness/more-hotlines.webp", alt: "More hotlines: Philippine Red Cross, MMDA Metrobase and your barangay hall", caption: "More hotlines" },
     ],
-    role: "TODO: your role",
-    overview: "TODO: overview of Flood Awareness.",
-    problem: "TODO: the problem Flood Awareness addresses.",
-    solution: "TODO: how Flood Awareness solves it.",
-    features: ["TODO: key features of Flood Awareness."],
+    overview:
+      "Flood Awareness Philippines is a public information website that helps Filipino families prepare for, respond to, and recover from floods. It gathers practical flood-preparedness information in one place so families can act early and stay safe, with the tagline 'Be Prepared. Stay Safe. Act Early.'",
+    problem:
+      "Flooding hits the Philippines every typhoon and monsoon season, but life-saving information is scattered across different agency websites, social media posts, and news reports. During an emergency, families waste time searching for hotlines, evacuation centers, and safety steps, and many don't prepare ahead because they don't know what to do.",
+    solution:
+      "Flood Awareness Philippines puts everything a household needs into one fast, mobile-friendly site: one-tap emergency hotlines, step-by-step safety tips for before, during, and after a flood, an interactive go-bag checklist, evacuation center guidance by region, flood-prone area listings, and links to official sources like PAGASA, NDRRMC, and Project NOAH. A Low Data mode keeps it usable on weak connections during storms.",
+    features: [
+      'Persistent "Call 911" button and quick-action bar (Call 911, Find a center, Hotlines, Go-bag checklist)',
+      'Emergency hotlines (911, NDRRMC, PAGASA, Philippine Red Cross, MMDA) with tap-to-call, copy-number buttons, cited sources, and an "Unconfirmed" label for numbers that couldn\'t be re-verified',
+      "Flood updates feed with four severity levels (Critical, Warning, Advisory, Informational), clearly labeled as sample data",
+      "Safety tips by stage: Before, During, and After a flood, plus Emergency Preparedness",
+      "Interactive flood preparedness checklist with a progress tracker, saved on the user's device",
+      "Go-bag essentials list for at least 72 hours",
+      'Evacuation center guidance with "Find centers near me" and browse by region (Metro Manila, Luzon, Visayas, Mindanao)',
+      "Flood-prone areas by island group, with links to HazardHunterPH and Project NOAH flood maps",
+      "Preparation guidance for vulnerable groups: elderly, PWDs, infants, children and pregnant women, and pets and livestock",
+      "Low Data mode toggle for slow or limited connections",
+      "Links to official sources: PAGASA, NDRRMC, Project NOAH",
+    ],
     stack: ["TODO: technology stack"],
-    process: ["TODO: development steps for Flood Awareness."],
-    result: "TODO: outcome of Flood Awareness.",
+    process: [
+      "Researched Philippine flood preparedness guidelines and official sources (PAGASA, NDRRMC, DILG, Philippine Red Cross, Project NOAH, HazardHunterPH)",
+      "Planned the site structure around what families need most in an emergency: hotlines, safety steps, and where to evacuate",
+      "Designed a clean, high-contrast, mobile-first UI with clear severity colors and large tap targets",
+      "Built the pages: Home, Flood Updates, Safety Tips, Evacuation Centers, About, and Contact",
+      "Added interactive features: tap-to-call and copy-number hotlines, a preparedness checklist with saved progress, and location-based center search",
+      "Verified every hotline against its official source, and flagged unconfirmed numbers and sample data for transparency",
+      "Added Low Data mode and tested on mobile and desktop",
+    ],
+    result:
+      "Delivered a complete, mobile-friendly flood-preparedness website with 6 main pages covering emergency hotlines, safety tips for every stage of a flood, evacuation center guidance across Luzon, Visayas, and Mindanao, and an interactive 12-item preparedness checklist. Every hotline cites its official source, and sample data is clearly labeled, so users can trust what they read. The project strengthened my skills in responsive web design, accessibility, user-centered information design, and building public-service tools for real community needs.",
   },
 ];
 
