@@ -332,6 +332,33 @@ html[data-intro="seen"] {
   }
 }
 
+/* ---------- timeline dot pulse ---------- */
+
+/* A ring expands and fades from the dot while its entry is in view (transform + opacity). */
+.timeline-dot::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid rgb(124 92 255 / 0.8);
+  opacity: 0;
+  pointer-events: none;
+}
+.timeline-dot.is-live::after {
+  animation: dot-pulse 2s ease-out infinite;
+}
+
+@keyframes dot-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-dot.is-live::after {
+    animation: none;
+  }
+}
+
 /* ---------- tech marquee ---------- */
 
 .marquee {
