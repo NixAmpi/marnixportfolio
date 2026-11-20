@@ -38,6 +38,26 @@ body {
   color: #fff;
 }
 
+/* Thin themed scrollbar. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(124 92 255 / 0.45) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(124 92 255 / 0.6), rgb(34 211 238 / 0.45));
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgb(124 92 255 / 0.85), rgb(34 211 238 / 0.7));
+}
+
 section[id] {
   scroll-margin-top: 5rem;
 }
