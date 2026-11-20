@@ -64,7 +64,9 @@ export default function Lanyard({ compact, active, onReady }: LanyardProps) {
     >
       <ambientLight intensity={Math.PI} />
       <Suspense fallback={null}>
-        <Physics gravity={[0, -40, 0]} timeStep={1 / 60} paused={!active}>
+        {/* Negative priority: the physics step (and its interpolated mesh transforms) runs
+            before Band's useFrame, so the strap reads this frame's card pose, not last frame's. */}
+        <Physics gravity={[0, -40, 0]} timeStep={1 / 60} interpolate updatePriority={-1} paused={!active}>
           <Band layout={layout} onReady={onReady} />
         </Physics>
         <Environment blur={0.75}>
@@ -84,10 +86,12 @@ const segmentProps: RigidBodyProps = {
   colliders: false,
   angularDamping: 4,
   linearDamping: 4,
+  ccd: true,
 };
 
-function Band({ layout, onReady, maxSpeed = 50, minSpeed = 0 }: { layout: Layout; onReady?: () => void; maxSpeed?: number; minSpeed?: number }) {
+function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layout; onReady?: () => void; maxSpeed?: number; minSpeed?: number }) {
   const band = useRef<THREE.Mesh<MeshLineGeometry, MeshLineMaterial>>(null);
+  const ring = useRef<THREE.Mesh>(null);
   const fixed = useRef<RapierRigidBody>(null!);
   const j1 = useRef<RapierRigidBody>(null!);
   const j2 = useRef<RapierRigidBody>(null!);
@@ -141,8 +145,10 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 0 }: { layout: Layout
   }, [hovered, dragged]);
 
   useFrame((state, delta) => {
-    const [f, a, b, c, body, line] = [fixed.current, j1.current, j2.current, j3.current, card.current, band.current];
-    if (!f || !a || !b || !c || !body || !line) return;
+    const [f, a, b, c, body, line, ringMesh] = [fixed.current, j1.current, j2.current, j3.current, card.current, band.current, ring.current];
+    if (!f || !a || !b || !c || !body || !line || !ringMesh) return;
+    // A long frame (tab switch, GC pause) must not fling the eased links.
+    const dt = Math.min(delta, 1 / 30);
 
     if (dragged) {
       const { vec, dir } = tmp;
@@ -158,10 +164,13 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 0 }: { layout: Layout
       const t = rb.translation();
       const l = (lerped.current[key] ??= new THREE.Vector3(t.x, t.y, t.z));
       const dist = Math.max(0.1, Math.min(1, l.distanceTo(t)));
-      l.lerp(t, Math.min(1, delta * (minSpeed + dist * (maxSpeed - minSpeed))));
+      l.lerp(t, Math.min(1, dt * (minSpeed + dist * (maxSpeed - minSpeed))));
     }
 
-    curve.points[0].copy(c.translation());
+    // Anchor the strap's bottom to where the ring is actually drawn this frame
+    // (the interpolated mesh), not the raw physics body, so the two never drift apart.
+    ringMesh.updateWorldMatrix(true, false);
+    ringMesh.getWorldPosition(curve.points[0]);
     curve.points[1].copy(lerped.current.j2!);
     curve.points[2].copy(lerped.current.j1!);
     curve.points[3].copy(f.translation());
@@ -215,20 +224,21 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 0 }: { layout: Layout
               <boxGeometry args={[CARD.width, CARD.height, CARD.depth]} />
               <meshStandardMaterial color="#0a2530" roughness={0.6} />
             </mesh>
-            <mesh position={[0, 0, CARD.depth / 2 + 0.0005]}>
+            {/* Faces sit 0.001 off the box and use polygonOffset so they never z-fight with it. */}
+            <mesh position={[0, 0, CARD.depth / 2 + 0.001]}>
               <planeGeometry args={[CARD.width, CARD.height]} />
-              <meshBasicMaterial map={front} toneMapped={false} />
+              <meshBasicMaterial map={front} toneMapped={false} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
             </mesh>
-            <mesh position={[0, 0, -CARD.depth / 2 - 0.0005]} rotation={[0, Math.PI, 0]}>
+            <mesh position={[0, 0, -CARD.depth / 2 - 0.001]} rotation={[0, Math.PI, 0]}>
               <planeGeometry args={[CARD.width, CARD.height]} />
-              <meshBasicMaterial map={back} toneMapped={false} />
+              <meshBasicMaterial map={back} toneMapped={false} polygonOffset polygonOffsetFactor={-1} polygonOffsetUnits={-1} />
             </mesh>
             {/* metal clip + ring */}
             <mesh position={[0, CARD.height / 2 + 0.05, 0]}>
               <boxGeometry args={[0.24, 0.16, 0.05]} />
               <meshStandardMaterial color="#c9ced8" metalness={1} roughness={0.3} />
             </mesh>
-            <mesh position={[0, CARD_JOINT_Y - 0.08, 0]}>
+            <mesh ref={ring} position={[0, CARD_JOINT_Y - 0.08, 0]}>
               <torusGeometry args={[0.08, 0.02, 12, 32]} />
               <meshStandardMaterial color="#c9ced8" metalness={1} roughness={0.3} />
             </mesh>
@@ -239,6 +249,7 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 0 }: { layout: Layout
         <meshLineGeometry />
         <meshLineMaterial
           color="white"
+          transparent
           depthTest={false}
           resolution={[size.width, size.height]}
           useMap={1}
