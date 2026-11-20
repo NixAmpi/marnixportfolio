@@ -114,7 +114,7 @@ export const projects: Project[] = [
       "A flood-preparedness website that brings safety guides, emergency hotlines, evacuation resources, and flood updates together in one place for Filipino communities.",
     description:
       "A flood-preparedness website that brings safety guides, emergency hotlines, evacuation resources, and flood updates together in one place for Filipino communities.",
-    tags: ["TODO: tags (tech used, e.g. HTML, CSS, JavaScript)"],
+    tags: ["HTML", "CSS", "JavaScript"],
     githubUrl: "https://github.com/NixAmpi/Flood-awareness",
     // liveUrl: add the deployed URL here to show the "Visit Site" button.
     thumbnail: "/projects/flood-awareness/home.webp",
@@ -150,7 +150,7 @@ export const projects: Project[] = [
       "Low Data mode toggle for slow or limited connections",
       "Links to official sources: PAGASA, NDRRMC, Project NOAH",
     ],
-    stack: ["TODO: technology stack"],
+    stack: ["HTML5", "CSS3", "JavaScript"],
     process: [
       "Researched Philippine flood preparedness guidelines and official sources (PAGASA, NDRRMC, DILG, Philippine Red Cross, Project NOAH, HazardHunterPH)",
       "Planned the site structure around what families need most in an emergency: hotlines, safety steps, and where to evacuate",
