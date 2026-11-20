@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -119,7 +120,9 @@ export default async function ProjectPage({ params }: Params) {
           </div>
         </header>
 
-        <div className="glass relative mt-10 aspect-[16/9] overflow-hidden">
+        <div
+          className={`glass relative mt-10 overflow-hidden ${project.phoneScreenshots ? "aspect-[4/5] sm:aspect-[16/9]" : "aspect-[16/9]"}`}
+        >
           <ProjectMedia
             src={cover?.src ?? project.thumbnail}
             alt={cover?.alt ?? `${project.title} screenshot`}
@@ -128,7 +131,21 @@ export default async function ProjectPage({ params }: Params) {
             preload
           />
         </div>
-        {rest.length > 0 && (
+        {rest.length > 0 && project.phoneScreenshots && (
+          <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            {rest.map((img) => (
+              <li key={img.src}>
+                <figure>
+                  <div className="relative aspect-[640/1303] overflow-hidden rounded-[1.1rem] border-[3px] border-white/15 bg-white shadow-xl shadow-black/50">
+                    <Image src={img.src} alt={img.alt} fill sizes="(min-width: 1024px) 190px, (min-width: 640px) 30vw, 45vw" className="object-cover object-top" />
+                  </div>
+                  {img.caption && <figcaption className="mt-2 text-center text-xs font-medium text-muted">{img.caption}</figcaption>}
+                </figure>
+              </li>
+            ))}
+          </ul>
+        )}
+        {rest.length > 0 && !project.phoneScreenshots && (
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
             {rest.map((img) => (
               <div key={img.src} className="glass relative aspect-[16/10] overflow-hidden">

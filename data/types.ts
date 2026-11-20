@@ -55,7 +55,8 @@ export type Project = {
   thumbnail?: string;
   /** Set for tall phone screenshots so they're shown whole in a handset frame instead of cropped. */
   phoneScreenshots?: boolean;
-  gallery: { src: string; alt: string }[];
+  /** First image is the large cover on the detail page; the rest show as a gallery below it. */
+  gallery: { src: string; alt: string; caption?: string }[];
   /** Your role on the project, e.g. "Group leader". */
   role?: Content;
   overview: Content;

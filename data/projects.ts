@@ -12,10 +12,16 @@ export const projects: Project[] = [
     tags: ["Flutter", "Firebase", "Mobile App"],
     githubUrl: "https://github.com/Russsz/CleanDasma",
     liveUrl: "https://cleandasma.org",
-    // TODO: add more screens to /public/projects/cleandasma/ and list them in `gallery`.
     thumbnail: "/projects/cleandasma/home.webp",
     phoneScreenshots: true,
-    gallery: [{ src: "/projects/cleandasma/home.webp", alt: "CleanDasma home screen with the community welcome banner and next collection" }],
+    gallery: [
+      { src: "/projects/cleandasma/home.webp", alt: "CleanDasma home screen with the community welcome banner and next collection", caption: "Home" },
+      { src: "/projects/cleandasma/splash.webp", alt: "CleanDasma splash screen with the app logo and city tagline", caption: "Splash" },
+      { src: "/projects/cleandasma/schedule.webp", alt: "Collection Schedule screen with live truck status and waste sorting guide", caption: "Schedule" },
+      { src: "/projects/cleandasma/alerts.webp", alt: "Notifications screen with summary and push notification settings", caption: "Alerts" },
+      { src: "/projects/cleandasma/eco-tips.webp", alt: "Eco Tips screen with saved tips, progress and a compost pit guide", caption: "Eco Tips" },
+      { src: "/projects/cleandasma/community.webp", alt: "Community Hub screen with household stats and announcements", caption: "Community" },
+    ],
     role: "Group leader",
     overview:
       "Hybrid waste management system built as a capstone project for the City of Dasmariñas, in coordination with CENRO (City Environment and Natural Resources Office).",
