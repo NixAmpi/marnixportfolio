@@ -1,13 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FramedShot, frameBox, screenshotBackdrop, type FrameKind } from "@/components/ScreenshotFrame";
 
 type Shot = { src: string; alt: string; caption?: string };
-
-const backdrop =
-  "bg-[radial-gradient(circle_at_25%_20%,rgba(124,92,255,0.35),transparent_50%),radial-gradient(circle_at_80%_85%,rgba(34,211,238,0.22),transparent_50%),linear-gradient(150deg,#141634,#0a0b1e)]";
 
 /** Shortest signed distance from the active slide, wrapping around the ends. */
 function offsetOf(i: number, active: number, n: number) {
@@ -17,16 +14,25 @@ function offsetOf(i: number, active: number, n: number) {
   return d;
 }
 
+// How far neighbours sit from centre (as % of their own width), how much they shrink,
+// and where frames are anchored. Phones rise from the bottom; browser windows are centred.
+const layout: Record<FrameKind, { step: number; scales: [number, number]; position: string; box: string }> = {
+  phone: { step: 64, scales: [0.84, 0.7], position: "bottom-[-1rem] origin-bottom", box: "aspect-[4/5] sm:aspect-[16/9]" },
+  // -mt-[19%] ≈ half the frame height (80% width ÷ 2.19 + chrome bar), as a % of width.
+  browser: { step: 74, scales: [0.82, 0.68], position: "top-1/2 -mt-[19%] origin-center", box: "aspect-[16/10] sm:aspect-[16/9]" },
+};
+
 /**
- * Coverflow-style carousel of phone screenshots: the active screen is centred and
- * full size, neighbours peek in smaller at the sides. Arrows, dots, swipe, arrow keys,
- * or clicking a side phone all navigate.
+ * Coverflow-style carousel of framed screenshots: the active screen is centred and
+ * full size, neighbours peek in smaller and dimmed at the sides. Arrows, dots, swipe,
+ * arrow keys, or clicking a side screen all navigate.
  */
-export function PhoneCarousel({ shots, title }: { shots: Shot[]; title: string }) {
+export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; title: string; frame: FrameKind }) {
   const [active, setActive] = useState(0);
   const startX = useRef<number | null>(null);
   const n = shots.length;
   const go = (i: number) => setActive(((i % n) + n) % n);
+  const L = layout[frame];
 
   return (
     <section
@@ -39,7 +45,7 @@ export function PhoneCarousel({ shots, title }: { shots: Shot[]; title: string }
       className="mt-10"
     >
       <div
-        className={`glass relative aspect-[4/5] touch-pan-y overflow-hidden sm:aspect-[16/9] ${backdrop}`}
+        className={`glass relative touch-pan-y overflow-hidden ${L.box} ${screenshotBackdrop}`}
         onPointerDown={(e) => (startX.current = e.clientX)}
         onPointerUp={(e) => {
           if (startX.current === null) return;
@@ -51,36 +57,36 @@ export function PhoneCarousel({ shots, title }: { shots: Shot[]; title: string }
         {shots.map((shot, i) => {
           const d = offsetOf(i, active, n);
           const far = Math.abs(d) > 2;
-          const scale = d === 0 ? 1 : Math.abs(d) === 1 ? 0.84 : 0.7;
+          const scale = d === 0 ? 1 : L.scales[Math.abs(d) === 1 ? 0 : 1];
           return (
             <button
               key={shot.src}
               type="button"
               tabIndex={Math.abs(d) === 1 ? 0 : -1}
-              aria-hidden={d !== 0 && Math.abs(d) > 1}
+              aria-hidden={Math.abs(d) > 1}
               aria-label={d === 0 ? undefined : `Show ${shot.caption ?? `screenshot ${i + 1}`}`}
               onClick={() => d !== 0 && go(i)}
               disabled={far}
               style={{
-                transform: `translateX(calc(-50% + ${d * 64}%)) scale(${scale})`,
+                transform: `translateX(calc(-50% + ${d * L.step}%)) scale(${scale})`,
                 zIndex: 10 - Math.abs(d),
-                // Side phones stay opaque (no see-through layering) and are dimmed instead.
+                // Side frames stay opaque (no see-through layering) and are dimmed instead.
                 opacity: far ? 0 : 1,
                 filter: d === 0 ? "none" : `brightness(${Math.abs(d) === 1 ? 0.55 : 0.35})`,
               }}
-              className={`absolute bottom-[-1rem] left-1/2 aspect-[640/1303] h-[88%] origin-bottom overflow-hidden rounded-[1.1rem] border-[3px] border-white/15 bg-white shadow-2xl shadow-black/60 transition-[transform,opacity,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              className={`absolute left-1/2 block overflow-hidden border-white/15 bg-white text-left shadow-2xl shadow-black/60 transition-[transform,opacity,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${frameBox[frame]} ${L.position} ${
                 d === 0 ? "cursor-default" : "cursor-pointer"
               } ${far ? "pointer-events-none" : ""}`}
             >
-              <Image
-                src={shot.src}
-                alt={d === 0 ? shot.alt : ""}
-                fill
-                sizes="(min-width: 640px) 270px, 50vw"
-                loading={i === 0 ? "eager" : undefined}
-                fetchPriority={i === 0 ? "high" : undefined}
-                className="object-cover object-top"
-              />
+              <span className={frame === "phone" ? "absolute inset-0" : "block"}>
+                <FramedShot
+                  kind={frame}
+                  src={shot.src}
+                  alt={d === 0 ? shot.alt : ""}
+                  sizes={frame === "phone" ? "(min-width: 640px) 270px, 50vw" : "(min-width: 1024px) 800px, 80vw"}
+                  preload={i === 0}
+                />
+              </span>
             </button>
           );
         })}

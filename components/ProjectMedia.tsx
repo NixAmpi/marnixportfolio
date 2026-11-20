@@ -1,12 +1,10 @@
 import Image from "next/image";
 import { ImageIcon } from "lucide-react";
-
-const backdrop =
-  "absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(124,92,255,0.35),transparent_50%),radial-gradient(circle_at_80%_85%,rgba(34,211,238,0.22),transparent_50%),linear-gradient(150deg,#141634,#0a0b1e)]";
+import { FramedShot, screenshotBackdrop, type FrameKind } from "@/components/ScreenshotFrame";
 
 /**
  * Screenshot if one exists, otherwise a branded placeholder so the grid never collapses.
- * `phone` shows a tall mobile screenshot whole, framed like a handset, instead of cropping it.
+ * With a `frame`, the screenshot is shown whole inside a phone or browser frame instead of cropped.
  */
 export function ProjectMedia({
   src,
@@ -14,30 +12,25 @@ export function ProjectMedia({
   sizes,
   label = "TODO: add screenshot",
   preload = false,
-  phone = false,
+  frame,
 }: {
   src?: string;
   alt: string;
   sizes: string;
   label?: string;
   preload?: boolean;
-  phone?: boolean;
+  frame?: FrameKind;
 }) {
-  if (src && phone) {
+  if (src && frame) {
     return (
-      // Anchored to the bottom and nudged down so the phone "rises" from the edge and clears the corner badge.
-      <div className={`${backdrop} flex items-end justify-center`}>
-        <div className="relative aspect-[640/1303] h-[86%] translate-y-4 overflow-hidden rounded-[1.1rem] border-[3px] border-white/15 bg-white shadow-2xl shadow-black/60 transition duration-500 group-hover:translate-y-2">
-
-          <Image
-            src={src}
-            alt={alt}
-            fill
-            sizes="(min-width: 1024px) 220px, 40vw"
-            loading={preload ? "eager" : undefined}
-            fetchPriority={preload ? "high" : undefined}
-            className="object-cover object-top"
-          />
+      // Anchored to the bottom and nudged down so the frame "rises" from the edge and clears the corner badge.
+      <div className={`absolute inset-0 flex items-end justify-center ${screenshotBackdrop}`}>
+        <div
+          className={`relative translate-y-4 overflow-hidden border-white/15 bg-white shadow-2xl shadow-black/60 transition duration-500 group-hover:translate-y-2 ${
+            frame === "phone" ? "aspect-[640/1303] h-[86%] rounded-[1.1rem] border-[3px]" : "w-[86%] rounded-lg border"
+          }`}
+        >
+          <FramedShot kind={frame} src={src} alt={alt} sizes={frame === "phone" ? "(min-width: 1024px) 220px, 40vw" : sizes} preload={preload} />
         </div>
       </div>
     );
@@ -56,7 +49,7 @@ export function ProjectMedia({
     );
   }
   return (
-    <div className={`${backdrop} grid place-items-center`}>
+    <div className={`absolute inset-0 grid place-items-center ${screenshotBackdrop}`}>
       <div className="flex flex-col items-center gap-2 text-center text-slate-400">
         <ImageIcon className="size-8 opacity-70" aria-hidden />
         <span className="text-xs">{label}</span>

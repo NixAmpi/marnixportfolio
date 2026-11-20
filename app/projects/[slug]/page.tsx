@@ -18,7 +18,7 @@ import { getProject, projects } from "@/data/projects";
 import { profile } from "@/data/profile";
 import { isTodo } from "@/data/types";
 import { GithubIcon } from "@/components/icons";
-import { PhoneCarousel } from "@/components/PhoneCarousel";
+import { ScreenshotCarousel } from "@/components/ScreenshotCarousel";
 import { ProjectMedia } from "@/components/ProjectMedia";
 import { Chip, Container, Text } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
@@ -120,8 +120,8 @@ export default async function ProjectPage({ params }: Params) {
           </div>
         </header>
 
-        {project.phoneScreenshots && project.gallery.length > 1 ? (
-          <PhoneCarousel shots={project.gallery} title={project.title} />
+        {project.screenshotFrame && project.gallery.length > 1 ? (
+          <ScreenshotCarousel shots={project.gallery} title={project.title} frame={project.screenshotFrame} />
         ) : (
           <>
             <div className="glass relative mt-10 aspect-[16/9] overflow-hidden">
@@ -129,7 +129,7 @@ export default async function ProjectPage({ params }: Params) {
                 src={cover?.src ?? project.thumbnail}
                 alt={cover?.alt ?? `${project.title} screenshot`}
                 sizes="(min-width: 1024px) 976px, 100vw"
-                phone={project.phoneScreenshots}
+                frame={project.screenshotFrame}
                 preload
               />
             </div>
