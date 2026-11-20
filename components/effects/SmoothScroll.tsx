@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { useReducedMotion } from "@/lib/hooks";
+import { FINE_POINTER, useMediaQuery, useReducedMotion } from "@/lib/hooks";
 
 declare global {
   interface Window {
@@ -23,12 +23,17 @@ export function scrollToTarget(target: number | string | HTMLElement) {
   window.scrollTo({ top, behavior: reduced ? "auto" : "smooth" });
 }
 
-/** Lenis smooth scrolling; skipped entirely when the user prefers reduced motion. */
+/**
+ * Lenis smooth scrolling for mouse/trackpad users. Skipped with reduced motion and on
+ * touch devices, where native momentum scrolling is already smooth and Lenis's
+ * per-frame loop would only cost main-thread time.
+ */
 export function SmoothScroll() {
   const reduced = useReducedMotion();
+  const fine = useMediaQuery(FINE_POINTER);
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || !fine) return;
     const lenis = new Lenis({
       lerp: 0.1,
       autoRaf: true,
@@ -44,7 +49,7 @@ export function SmoothScroll() {
       document.documentElement.classList.remove("has-lenis");
       delete window.__lenis;
     };
-  }, [reduced]);
+  }, [reduced, fine]);
 
   return null;
 }

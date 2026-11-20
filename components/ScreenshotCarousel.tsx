@@ -132,7 +132,7 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
             {active + 1} / {n}
           </span>
         </p>
-        <div className="flex gap-2">
+        <div className="flex">
           {shots.map((shot, i) => (
             <button
               key={shot.src}
@@ -140,8 +140,14 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
               onClick={() => go(i)}
               aria-label={`Show ${shot.caption ?? `screenshot ${i + 1}`}`}
               aria-current={i === active ? "true" : undefined}
-              className={`h-2 rounded-full transition-all ${i === active ? "w-6 bg-accent-gradient" : "w-2 bg-white/25 hover:bg-white/50"}`}
-            />
+              // 24px tap target (WCAG target size) around the small visible dot.
+              className="group/dot grid h-6 min-w-6 place-items-center"
+            >
+              <span
+                aria-hidden
+                className={`h-2 rounded-full transition-all ${i === active ? "w-6 bg-accent-gradient" : "w-2 bg-white/25 group-hover/dot:bg-white/50"}`}
+              />
+            </button>
           ))}
         </div>
       </div>

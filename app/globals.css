@@ -195,6 +195,16 @@ html.has-custom-cursor :is(input, textarea, [contenteditable="true"]) {
   animation-delay: -9s;
 }
 
+/* Phones: no grain layer (costly to composite, invisible at 3%), and still aurora blobs. */
+@media (pointer: coarse), (max-width: 767px) {
+  .grain {
+    display: none;
+  }
+  .aurora {
+    animation: none;
+  }
+}
+
 @keyframes aurora {
   0% { transform: translate3d(0, 0, 0) scale(1); }
   50% { transform: translate3d(6%, -4%, 0) scale(1.12); }

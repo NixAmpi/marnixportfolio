@@ -24,7 +24,7 @@ export function Contact() {
           subtitle="I'm actively looking for internship and entry-level opportunities in software development, database management, and IT support."
         />
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1.3fr]">
           <Reveal className="flex flex-col gap-3">
             {rows.map((r) => {
               const inner = (
