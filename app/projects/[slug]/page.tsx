@@ -10,6 +10,7 @@ import {
   ListChecks,
   Target,
   Trophy,
+  UserRound,
   Workflow,
   type LucideIcon,
 } from "lucide-react";
@@ -32,7 +33,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const project = getProject((await params).slug);
   if (!project) return {};
-  const description = isTodo(project.description) ? project.summary : project.description;
+  const description = [project.description, project.summary].find((d) => !isTodo(d)) ?? `${project.title} — a project by ${profile.name}.`;
   return {
     title: project.title,
     description,
@@ -82,11 +83,20 @@ export default async function ProjectPage({ params }: Params) {
         </Link>
 
         <header className="mt-8">
-          <p className="text-xs font-semibold tracking-[0.3em] text-eyebrow uppercase">{project.category}</p>
+          <p className="text-xs font-semibold tracking-[0.3em] text-eyebrow uppercase">
+            <Text value={project.category} />
+          </p>
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-white sm:text-6xl">{project.title}</h1>
           <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted">
             <Text value={project.description} />
           </p>
+          {project.role && (
+            <p className="mt-4 flex items-center gap-2 text-sm text-slate-300">
+              <UserRound className="size-4 text-accent-cyan" aria-hidden />
+              <span className="font-semibold text-white">My role:</span>
+              <Text value={project.role} />
+            </p>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
             <a
               href={codeUrl}

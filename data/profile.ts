@@ -39,7 +39,7 @@ export const profile = {
 };
 
 export const stats: Stat[] = [
-  { value: "4", label: "Projects built across web, mobile, and database systems" },
+  { value: "3", label: "Projects built across web, mobile, and database systems" },
   { value: "6+", label: "Certifications in databases, networking, and programming" },
   { value: "5", label: "Core focus areas, from web to systems development" },
 ];

@@ -54,6 +54,8 @@ export type Project = {
   /** Path under /public, e.g. "/projects/cleandasma/cover.png". */
   thumbnail?: string;
   gallery: { src: string; alt: string }[];
+  /** Your role on the project, e.g. "Group leader". */
+  role?: Content;
   overview: Content;
   problem: Content;
   solution: Content;

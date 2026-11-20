@@ -23,8 +23,13 @@ export function SectionHeading({
 }
 
 export function Chip({ children }: { children: React.ReactNode }) {
+  const todo = typeof children === "string" && isTodo(children);
   return (
-    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-200">
+    <span
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+        todo ? "border-dashed border-amber-300/40 bg-amber-300/5 text-amber-200/90" : "border-white/10 bg-white/[0.04] text-slate-200"
+      }`}
+    >
       {children}
     </span>
   );
