@@ -4,6 +4,7 @@ import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { Container, SectionHeading } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
 import { ContactForm } from "./ContactForm";
+import { CopyButton } from "./CopyButton";
 
 const rows = [
   { label: "Email", value: profile.email, href: `mailto:${profile.email}`, icon: <Mail className="size-5" aria-hidden /> },
@@ -37,6 +38,18 @@ export function Contact() {
                   </span>
                 </>
               );
+              // Email: a <button> can't live inside the <a>, so the link stretches over the card
+              // and the copy button sits above it.
+              if (r.label === "Email") {
+                return (
+                  <div key={r.label} className="glass glass-hover relative flex items-center gap-4 p-4">
+                    <a href={r.href} className="flex min-w-0 flex-1 items-center gap-4 after:absolute after:inset-0 after:content-['']">
+                      {inner}
+                    </a>
+                    <CopyButton value={profile.email} label="Copy email address" />
+                  </div>
+                );
+              }
               return r.href ? (
                 <a
                   key={r.label}
