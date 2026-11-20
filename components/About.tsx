@@ -3,6 +3,7 @@ import { education, focusAreas, profile, stats } from "@/data/profile";
 import { Icon } from "@/components/icons";
 import { Chip, Container, SectionHeading } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
+import { CountUp } from "@/components/effects/CountUp";
 
 export function About() {
   return (
@@ -25,7 +26,9 @@ export function About() {
             <Reveal className="grid grid-cols-3 gap-3">
               {stats.map((s) => (
                 <div key={s.label} className="glass fx-card p-4 text-center sm:p-5">
-                  <p className="text-gradient text-2xl font-extrabold sm:text-3xl">{s.value}</p>
+                  <p className="text-gradient text-2xl font-extrabold sm:text-3xl">
+                    <CountUp value={s.value} />
+                  </p>
                   <p className="mt-1 text-[11px] leading-snug text-muted sm:text-xs">{s.label}</p>
                 </div>
               ))}

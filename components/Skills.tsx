@@ -10,6 +10,11 @@ import { Reveal } from "@/components/Reveal";
 
 type Filter = "All" | SkillCategory;
 
+/** Number of skills behind each filter pill. */
+const counts = Object.fromEntries(
+  ["All", ...skillCategories].map((c) => [c, c === "All" ? skills.length : skills.filter((s) => s.category === c).length]),
+) as Record<Filter, number>;
+
 const filters: Filter[] = ["All", ...skillCategories.filter((c) => skills.some((s) => s.category === c))];
 
 export function Skills() {
@@ -48,6 +53,17 @@ export function Skills() {
                       />
                     )}
                     {f}
+                    <span
+                      aria-hidden
+                      className={`ml-2 inline-grid min-w-5 place-items-center rounded-full px-1.5 text-[10px] leading-5 font-semibold tabular-nums transition-colors ${
+                        active ? "bg-white/20 text-white" : "bg-white/[0.07] text-slate-400"
+                      }`}
+                    >
+                      {counts[f]}
+                    </span>
+                    <span className="sr-only">
+                      , {counts[f]} {counts[f] === 1 ? "skill" : "skills"}
+                    </span>
                   </button>
                 );
               })}
