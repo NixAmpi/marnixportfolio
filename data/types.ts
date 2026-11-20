@@ -37,7 +37,14 @@ export type SkillCategory =
 export type Skill = {
   name: string;
   category: SkillCategory;
-  icon: IconName;
+  /** Single uppercase letter on the real keyboard that presses this keycap. */
+  key: string;
+  /** Keycap colour (hex). */
+  color: string;
+  /** White logo SVG under /public/skills/. */
+  logo: string;
+  /** One line on how I use it; "TODO…" hides it. */
+  description: Content;
 };
 
 export type Project = {

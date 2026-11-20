@@ -3,13 +3,14 @@
 /*
  * Hanging ID-card lanyard, after the React Bits "Lanyard" pattern:
  * a fixed anchor, three rope-jointed links and a card rigid body, with the strap
- * drawn as a MeshLine through the links. The card face is /public/lanyard/card.png.
+ * drawn as a MeshLine through the links. The card face is /public/lanyard/card.webp (built from card.png by scripts/optimize-card.mjs).
  */
 
 import * as THREE from "three";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, extend, useFrame, useThree, type ThreeElement, type ThreeEvent } from "@react-three/fiber";
 import { Environment, Lightformer, useTexture } from "@react-three/drei";
+import { ResumeLoop } from "@/components/effects/ResumeLoop";
 import {
   BallCollider,
   CuboidCollider,
@@ -90,6 +91,7 @@ export default function Lanyard({ compact, active, onReady }: LanyardProps) {
       style={{ touchAction: "pan-y" }}
       aria-hidden
     >
+      <ResumeLoop active={active} />
       <ambientLight intensity={Math.PI} />
       <Suspense fallback={null}>
         {/* Negative priority: the physics step (and its interpolated mesh transforms) runs
@@ -145,7 +147,7 @@ function Band({ layout, onReady, maxSpeed = 50, minSpeed = 10 }: { layout: Layou
   const size = useThree((s) => s.size);
 
   const [front, back, strap] = useTexture(
-    ["/lanyard/card.png", "/lanyard/card-back.png", "/lanyard/band.png"],
+    ["/lanyard/card.webp", "/lanyard/card-back.webp", "/lanyard/band.png"],
     (textures) => {
       for (const t of textures) {
         t.colorSpace = THREE.SRGBColorSpace;

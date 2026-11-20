@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { LayoutGroup, motion } from "framer-motion";
+import { Volume2, VolumeX } from "lucide-react";
 import { skillCategories, skills } from "@/data/skills";
-import type { SkillCategory } from "@/data/types";
-import { Icon } from "@/components/icons";
+import { isTodo, type SkillCategory } from "@/data/types";
 import { Container, SectionHeading } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
+import { FINE_POINTER, useMediaQuery } from "@/lib/hooks";
+import { inkFor, playThock } from "@/components/skills/keycaps";
+import { use3DCapable, useKeySound } from "@/components/skills/stores";
+
+const Keyboard3D = dynamic(() => import("@/components/skills/Keyboard3D"), { ssr: false });
 
 type Filter = "All" | SkillCategory;
 
@@ -17,9 +23,78 @@ const counts = Object.fromEntries(
 
 const filters: Filter[] = ["All", ...skillCategories.filter((c) => skills.some((s) => s.category === c))];
 
+
 export function Skills() {
   const [filter, setFilter] = useState<Filter>("All");
-  const visible = filter === "All" ? skills : skills.filter((s) => s.category === filter);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [focused, setFocused] = useState<number | null>(null);
+  const [load3D, setLoad3D] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [sound, setSound] = useKeySound();
+  // Server + first hydration render the flat grid; capable devices then switch to 3D.
+  // Skills sits below the fold, so that swap happens off-screen.
+  const mode = use3DCapable() ? "3d" : "2d";
+  const pressTimes = useRef(new Float64Array(skills.length).fill(-10));
+  const stageRef = useRef<HTMLDivElement>(null);
+  const finePointer = useMediaQuery(FINE_POINTER);
+  const compact = useMediaQuery("(max-width: 767px)");
+
+  const dimmed = useMemo(() => skills.map((s) => filter !== "All" && s.category !== filter), [filter]);
+
+  // Load the 3D chunk when the stage nears the viewport; run it only while on screen.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || mode !== "3d") return;
+    const near = new IntersectionObserver(([e]) => e.isIntersecting && setLoad3D(true), { rootMargin: "300px 0px" });
+    const onScreen = new IntersectionObserver(([e]) => setVisible(e.isIntersecting));
+    near.observe(el);
+    onScreen.observe(el);
+    return () => {
+      near.disconnect();
+      onScreen.disconnect();
+    };
+  }, [mode]);
+
+  const soundRef = useRef(sound);
+  useEffect(() => {
+    soundRef.current = sound;
+  }, [sound]);
+
+  const press = useCallback((i: number) => {
+    pressTimes.current[i] = performance.now() / 1000;
+    setSelected(i);
+    if (soundRef.current) playThock();
+  }, []);
+
+  // Real-keyboard shortcuts: desktop only, while the section is on screen, never while typing in a field.
+  const sectionVisible = useRef(false);
+  useEffect(() => {
+    const el = document.getElementById("skills");
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => (sectionVisible.current = e.isIntersecting), { threshold: 0.25 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!finePointer) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || !sectionVisible.current) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, [contenteditable='true']")) return;
+      const i = skills.findIndex((s) => s.key === e.key.toUpperCase());
+      if (i >= 0) press(i);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [finePointer, press]);
+
+  const toggleSound = () => {
+    setSound(!sound);
+    if (!sound) playThock(); // audible confirmation (and unlocks audio on this gesture)
+  };
+
+  const current = selected !== null ? skills[selected] : null;
 
   return (
     <section id="skills" className="section-glow py-24 sm:py-28">
@@ -28,11 +103,17 @@ export function Skills() {
           eyebrow="What I work with"
           title="Skills & Technologies"
           subtitle="Technologies and tools I use for development, database work, and project workflows."
+          hint={
+            <>
+              <span className="hidden [@media(hover:hover)_and_(pointer:fine)]:inline">(hint: press a key or click one)</span>
+              <span className="[@media(hover:hover)_and_(pointer:fine)]:hidden">(hint: tap a key)</span>
+            </>
+          }
         />
 
         <Reveal>
           <LayoutGroup id="skill-filters">
-            <div role="group" aria-label="Filter skills by category" className="mb-10 flex flex-wrap justify-center gap-2">
+            <div role="group" aria-label="Filter skills by category" className="mb-6 flex flex-wrap justify-center gap-2">
               {filters.map((f) => {
                 const active = f === filter;
                 return (
@@ -71,30 +152,123 @@ export function Skills() {
           </LayoutGroup>
         </Reveal>
 
-        <motion.ul layout className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {visible.map((s) => (
-              <motion.li
-                key={s.name}
-                layout
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.25 }}
-                className="glass glass-hover fx-card flex items-center gap-3 p-4"
-              >
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-accent-violet/25 to-accent-cyan/15 text-white">
-                  <Icon name={s.icon} className="size-5" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-white">{s.name}</span>
-                  <span className="block text-[10px] font-semibold tracking-[0.18em] text-muted uppercase">{s.category}</span>
-                </span>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </motion.ul>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-pressed={sound}
+            aria-label={sound ? "Mute key sounds" : "Turn on key sounds"}
+            className="absolute top-0 right-0 z-10 grid size-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition hover:border-white/25 hover:text-white"
+          >
+            {sound ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
+          </button>
+
+          {mode === "3d" ? (
+            <div ref={stageRef} className="relative h-[440px] sm:h-[500px]">
+              {/* Placeholder plate until the 3D scene is ready (same size, so no layout shift). */}
+              <div
+                aria-hidden
+                className={`absolute inset-x-[12%] top-1/2 h-1/2 -translate-y-1/2 -skew-x-12 rounded-3xl bg-gradient-to-br from-white/[0.05] to-white/[0.01] transition-opacity duration-500 ${ready ? "opacity-0" : "opacity-100"}`}
+              />
+              {load3D && (
+                <div className={`absolute inset-0 transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}>
+                  <Keyboard3D
+                    skills={skills}
+                    dimmed={dimmed}
+                    focused={focused}
+                    pressTimes={pressTimes}
+                    onPress={press}
+                    active={visible}
+                    compact={compact}
+                    onReady={() => setReady(true)}
+                  />
+                </div>
+              )}
+              {/* The canvas isn't reachable by keyboard or screen readers, so each key also exists
+                  as a real button. Focusing one lifts and lights its keycap in the scene. */}
+              <ul className="sr-only" aria-label="Skill keys">
+                {skills.map((s, i) => (
+                  <li key={s.name}>
+                    <button
+                      type="button"
+                      aria-label={`${s.name}, ${s.category}${dimmed[i] ? " (filtered out)" : ""}`}
+                      aria-keyshortcuts={finePointer ? s.key : undefined}
+                      onFocus={() => setFocused(i)}
+                      onBlur={() => setFocused((f) => (f === i ? null : f))}
+                      onClick={() => press(i)}
+                    >
+                      {s.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <FlatKeys dimmed={dimmed} selected={selected} onPress={press} />
+          )}
+
+          <InfoCard skill={current} />
+        </div>
       </Container>
     </section>
+  );
+}
+
+/** Reduced-motion / low-end fallback: keycap-styled buttons in a flat grid. */
+function FlatKeys({ dimmed, selected, onPress }: { dimmed: boolean[]; selected: number | null; onPress: (i: number) => void }) {
+  return (
+    <ul className="mx-auto grid max-w-3xl grid-cols-4 gap-3 pt-12 sm:grid-cols-6 sm:gap-4">
+      {skills.map((s, i) => {
+        const ink = inkFor(s.color);
+        return (
+          <li key={s.name}>
+            <button
+              type="button"
+              onClick={() => onPress(i)}
+              aria-label={`${s.name}, ${s.category}${dimmed[i] ? " (filtered out)" : ""}`}
+              style={{ backgroundColor: s.color, color: ink }}
+              className={`relative grid aspect-square w-full place-items-center rounded-2xl shadow-[inset_0_-6px_0_rgba(0,0,0,0.28),0_6px_14px_rgba(0,0,0,0.35)] transition duration-200 active:translate-y-1 active:shadow-[inset_0_-2px_0_rgba(0,0,0,0.28),0_2px_6px_rgba(0,0,0,0.35)] ${
+                dimmed[i] ? "translate-y-1 opacity-30 saturate-50" : ""
+              } ${selected === i ? "ring-2 ring-white ring-offset-2 ring-offset-ink-950" : ""}`}
+            >
+              <span aria-hidden className="absolute top-1.5 left-2 text-[11px] font-bold opacity-80">
+                {s.key}
+              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVGs, tinted with a CSS filter */}
+              <img src={s.logo} alt="" loading="lazy" className="size-1/2" style={ink === "#ffffff" ? undefined : { filter: "brightness(0)" }} />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** The info card under the keyboard; announced to screen readers when it changes. */
+function InfoCard({ skill }: { skill: (typeof skills)[number] | null }) {
+  return (
+    <div aria-live="polite" className="glass mx-auto mt-6 flex max-w-xl items-center gap-4 p-4 sm:p-5">
+      {skill ? (
+        <>
+          <span
+            aria-hidden
+            className="grid size-12 shrink-0 place-items-center rounded-xl shadow-[inset_0_-4px_0_rgba(0,0,0,0.25)]"
+            style={{ backgroundColor: skill.color }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
+            <img src={skill.logo} alt="" className="size-6" style={inkFor(skill.color) === "#ffffff" ? undefined : { filter: "brightness(0)" }} />
+          </span>
+          <span className="min-w-0">
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="font-bold text-white">{skill.name}</span>
+              <span className="text-[11px] font-semibold tracking-[0.18em] text-muted uppercase">{skill.category}</span>
+            </span>
+            {!isTodo(skill.description) && <span className="mt-0.5 block text-sm text-slate-300">{skill.description}</span>}
+          </span>
+        </>
+      ) : (
+        <span className="w-full text-center text-sm text-muted">Pick a key to see how I use it.</span>
+      )}
+    </div>
   );
 }

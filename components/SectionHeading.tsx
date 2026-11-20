@@ -8,7 +8,18 @@ const ease = [0.22, 1, 0.36, 1] as const;
  * Eyebrow (with a drawn-in gradient line) + title + subtitle. On first view the title
  * fades up from a slight blur. Reduced motion is handled in CSS via [data-reveal].
  */
-export function SectionHeading({ eyebrow, title, subtitle }: { eyebrow: string; title: string; subtitle?: string }) {
+export function SectionHeading({
+  eyebrow,
+  title,
+  subtitle,
+  hint,
+}: {
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+  /** Small muted line under the subtitle. */
+  hint?: React.ReactNode;
+}) {
   return (
     <motion.div
       initial="hidden"
@@ -51,6 +62,15 @@ export function SectionHeading({ eyebrow, title, subtitle }: { eyebrow: string; 
           className="mt-4 text-base text-muted"
         >
           {subtitle}
+        </motion.p>
+      )}
+      {hint && (
+        <motion.p
+          data-reveal
+          variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.6, delay: 0.3 } } }}
+          className="mt-2 text-sm text-slate-500"
+        >
+          {hint}
         </motion.p>
       )}
     </motion.div>

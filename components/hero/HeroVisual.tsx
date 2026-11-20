@@ -1,26 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { profile } from "@/data/profile";
+import { canRun3D } from "@/lib/webgl";
 
 const Lanyard = dynamic(() => import("./Lanyard"), { ssr: false });
 
 type Mode = "static" | "3d";
-
-function canRun3D(): boolean {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-  const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
-  if (nav.connection?.saveData) return false;
-  if ((nav.deviceMemory ?? 8) < 4 || (nav.hardwareConcurrency ?? 8) < 4) return false;
-  try {
-    const canvas = document.createElement("canvas");
-    return !!(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Shows a static hanging card immediately (no layout shift), then — on capable
@@ -95,14 +82,19 @@ function StaticCard({ hidden }: { hidden: boolean }) {
       <div className="absolute top-[40%] left-1/2 h-[48%] -translate-x-1/2 lg:top-[46%] lg:h-[33%]">
         <span className="absolute bottom-[96%] left-1/2 h-[200vh] w-3 -translate-x-1/2 rounded-sm bg-[#0e0e12] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]" />
         <span className="absolute -top-[5%] left-1/2 h-[7%] w-[16%] -translate-x-1/2 rounded-md bg-gradient-to-b from-slate-200 to-slate-400" />
-        <Image
-          src="/lanyard/card.png"
+        {/* Static export has no image optimizer, so the WebP sizes are pre-built
+            (scripts/optimize-card.mjs) and picked with srcSet. This is the page's LCP image. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/lanyard/card.webp"
+          srcSet="/lanyard/card-480.webp 480w, /lanyard/card.webp 800w"
+          sizes="(min-width: 1024px) 300px, 240px"
           alt=""
           width={800}
           height={1125}
           loading="eager"
           fetchPriority="high"
-          sizes="(min-width: 1024px) 300px, 240px"
+          decoding="async"
           className="relative h-full w-auto origin-top rotate-[4deg] rounded-xl shadow-2xl shadow-black/60"
         />
       </div>
