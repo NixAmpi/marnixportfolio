@@ -5,7 +5,7 @@ export const profile = {
   shortName: "Marnix",
   /** The hero heading breaks the name across these two lines. */
   nameLines: ["Marnix Allain", "Ampeloquio"] as const,
-  role: "Aspiring Software Developer",
+  role: "Software Developer",
   status: "Open for Internship / Entry-Level Roles",
   tagline:
     "I build clean, reliable, and user-friendly digital solutions using Python, databases, web technologies, and modern development practices.",
