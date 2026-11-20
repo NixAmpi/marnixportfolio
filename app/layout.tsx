@@ -4,6 +4,7 @@ import { Loader } from "@/components/Loader";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/effects/BackToTop";
 import { CardSpotlight } from "@/components/effects/CardSpotlight";
 import { Cursor } from "@/components/effects/Cursor";
 import { Grain } from "@/components/effects/Grain";
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <main id="main">{children}</main>
           <Footer />
+          <BackToTop />
         </MotionProvider>
       </body>
     </html>

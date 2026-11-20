@@ -6,19 +6,31 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { navLinks, profile, type SectionId } from "@/data/profile";
+import { useReducedMotion } from "@/lib/hooks";
 
 export function Navbar() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
+  const reduced = useReducedMotion();
   const [spied, setSpied] = useState<SectionId>("home");
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   const active: SectionId | null = isHome ? spied : pathname.startsWith("/projects") ? "projects" : null;
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 16);
+      // Hide on scroll down, reveal on any scroll up; always shown near the top.
+      if (Math.abs(y - lastY) > 6) {
+        setHidden(y > lastY && y > 160);
+        lastY = y;
+      }
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -55,12 +67,16 @@ export function Navbar() {
   }, [open]);
 
   const solid = scrolled || open;
+  // Never tuck away while the mobile menu is open or for reduced-motion users.
+  const tucked = hidden && !open && !reduced;
 
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-300 ${
-        solid ? "border-b border-white/10 bg-ink-950/70 backdrop-blur-xl" : "border-b border-transparent"
-      }`}
+      // Keyboard users tabbing into a tucked-away navbar bring it back.
+      onFocusCapture={() => setHidden(false)}
+      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,translate] duration-300 ${
+        tucked ? "-translate-y-full" : ""
+      } ${solid ? "border-b border-white/10 bg-ink-950/70 backdrop-blur-xl" : "border-b border-transparent"}`}
     >
       <nav aria-label="Primary" className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/#home" className="text-xl font-extrabold tracking-tight text-white" onClick={() => setOpen(false)}>
