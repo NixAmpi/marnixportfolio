@@ -95,6 +95,7 @@ function StaticCard({ hidden }: { hidden: boolean }) {
           alt=""
           width={800}
           height={1125}
+          loading="eager"
           fetchPriority="high"
           sizes="(min-width: 1024px) 300px, 240px"
           className="relative h-full w-auto origin-top rotate-[4deg] rounded-xl shadow-2xl shadow-black/60"
