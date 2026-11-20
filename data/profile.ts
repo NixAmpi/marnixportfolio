@@ -22,9 +22,9 @@ export const profile = {
   // TODO: drop your CV at /public/cv/Marnix_Ampeloquio_CV.pdf (the old site linked a missing download/resume.jpg).
   cvUrl: "/cv/Marnix_Ampeloquio_CV.pdf",
   about: [
-    "Technology has always interested me because it can turn simple ideas into real solutions. As an IT student, I like learning how systems, networks, and software work together. I enjoy solving technical problems and trying new tools that make work easier and safer.",
-    "During my studies, I have worked on projects involving programming, database management, and system development. I have hands-on experience with Python, MySQL, HTML, CSS, and basic networking. These experiences helped me improve my problem-solving, troubleshooting, and teamwork skills.",
-    "I am looking for opportunities where I can use my skills in a real work setting and gain industry experience. My goal is to keep learning, improve my technical skills, and contribute to reliable and innovative technology solutions.",
+    "I build practical technology solutions — turning simple ideas into working systems. My work sits where software, databases, and networks meet, and I enjoy the problem-solving that comes with making them run smoothly, securely, and reliably.",
+    "I've built projects across programming, database management, and system development, working hands-on with Python, MySQL, Firebase, HTML, CSS, and networking fundamentals. Each one has sharpened how I troubleshoot, design, and collaborate within a team.",
+    "I'm open to roles where I can contribute to real products, take ownership of technical problems, and keep growing alongside a team that values reliable, well-crafted solutions.",
   ],
   careerDirection:
     "I am continuously improving in software development, database management, networking, and cybersecurity. My goal is to become a reliable IT professional who can build practical systems for real users.",
@@ -41,7 +41,7 @@ export const profile = {
 export const stats: Stat[] = [
   { value: "4", label: "Projects built across web, mobile, and database systems" },
   { value: "6+", label: "Certifications in databases, networking, and programming" },
-  { value: "2027", label: "Expected graduation, BS Information Technology" },
+  { value: "5", label: "Core focus areas, from web to systems development" },
 ];
 
 export const education: Education[] = [
