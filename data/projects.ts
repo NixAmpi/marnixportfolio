@@ -24,7 +24,7 @@ export const projects: Project[] = [
     ],
     role: "Group leader",
     overview:
-      "Hybrid waste management system built as a capstone project for the City of Dasmariñas, in coordination with CENRO (City Environment and Natural Resources Office).",
+      "Hybrid waste management system built for the City of Dasmariñas, in coordination with CENRO (City Environment and Natural Resources Office).",
     problem:
       "Residents of Dasmariñas often miss garbage collection because schedules, delays, and service disruptions aren't communicated clearly or on time. Announcements are scattered across barangay posts and word of mouth, so residents and CENRO (City Environment and Natural Resources Office) have no direct, reliable channel. The result is missed pickups, uncollected waste, poor segregation habits, and weak compliance with RA 9003 (Ecological Solid Waste Management Act).",
     solution:

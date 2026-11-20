@@ -12,11 +12,11 @@ export const experience: ExperienceEntry[] = [
   },
   {
     period: "TODO: dates",
-    title: "Capstone Project — CleanDasma",
-    organization: "Lyceum of the Philippines University – Cavite",
+    title: "Project Lead & Developer — CleanDasma",
+    organization: "Dasmariñas City, Cavite",
     description:
-      "A mobile-based civic engagement and waste management application for community collection updates.",
-    tags: ["Project", "Flutter", "Firebase"],
+      "Led the team that built CleanDasma, a hybrid mobile and web waste management system for the City of Dasmariñas. It connects CENRO with residents through GPS truck tracking, route planning, collection schedules, and real-time alerts.",
+    tags: ["Project Lead", "Flutter", "Supabase", "Firebase Cloud Messaging"],
   },
   {
     period: "2025",
