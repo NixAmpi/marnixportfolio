@@ -124,6 +124,7 @@ export default async function ProjectPage({ params }: Params) {
             src={cover?.src ?? project.thumbnail}
             alt={cover?.alt ?? `${project.title} screenshot`}
             sizes="(min-width: 1024px) 976px, 100vw"
+            phone={project.phoneScreenshots}
             preload
           />
         </div>
@@ -131,7 +132,7 @@ export default async function ProjectPage({ params }: Params) {
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
             {rest.map((img) => (
               <div key={img.src} className="glass relative aspect-[16/10] overflow-hidden">
-                <ProjectMedia src={img.src} alt={img.alt} sizes="(min-width: 640px) 320px, 50vw" />
+                <ProjectMedia src={img.src} alt={img.alt} phone={project.phoneScreenshots} sizes="(min-width: 640px) 320px, 50vw" />
               </div>
             ))}
           </div>

@@ -24,7 +24,12 @@ export function Projects() {
           {projects.map((p, i) => (
             <RevealItem key={p.slug} delay={i * 0.08} className="glass glass-hover group relative flex h-full flex-col overflow-hidden">
                 <div className="relative aspect-[16/10] overflow-hidden border-b border-white/10">
-                  <ProjectMedia src={p.thumbnail} alt={`${p.title} screenshot`} sizes="(min-width: 1024px) 360px, (min-width: 768px) 50vw, 100vw" />
+                  <ProjectMedia
+                    src={p.thumbnail}
+                    alt={`${p.title} screenshot`}
+                    phone={p.phoneScreenshots}
+                    sizes="(min-width: 1024px) 360px, (min-width: 768px) 50vw, 100vw"
+                  />
                   <span
                     className={`absolute top-3 left-3 rounded-full border bg-ink-950/75 px-3 py-1 text-[11px] font-semibold backdrop-blur ${
                       isTodo(p.category) ? "border-dashed border-amber-300/50 text-amber-200" : "border-white/15 text-white"

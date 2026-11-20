@@ -53,6 +53,8 @@ export type Project = {
   liveUrl?: string;
   /** Path under /public, e.g. "/projects/cleandasma/cover.png". */
   thumbnail?: string;
+  /** Set for tall phone screenshots so they're shown whole in a handset frame instead of cropped. */
+  phoneScreenshots?: boolean;
   gallery: { src: string; alt: string }[];
   /** Your role on the project, e.g. "Group leader". */
   role?: Content;

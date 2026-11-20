@@ -11,9 +11,10 @@ export const projects: Project[] = [
       "A hybrid waste management application for the City of Dasmariñas, Cavite, with GPS truck tracking, route planning, and collection updates for residents.",
     tags: ["Flutter", "Firebase", "Mobile App"],
     githubUrl: "TODO: link to the CleanDasma repository",
-    // TODO: add screenshots to /public/projects/cleandasma/ and reference them here.
-    thumbnail: undefined,
-    gallery: [],
+    // TODO: add more screens to /public/projects/cleandasma/ and list them in `gallery`.
+    thumbnail: "/projects/cleandasma/home.webp",
+    phoneScreenshots: true,
+    gallery: [{ src: "/projects/cleandasma/home.webp", alt: "CleanDasma home screen with the community welcome banner and next collection" }],
     role: "Group leader",
     overview:
       "Hybrid waste management system built as a capstone project for the City of Dasmariñas, in coordination with CENRO (City Environment and Natural Resources Office).",
