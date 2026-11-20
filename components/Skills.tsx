@@ -19,13 +19,11 @@ export function Skills() {
   return (
     <section id="skills" className="section-glow py-24 sm:py-28">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow="What I work with"
-            title="Skills & Technologies"
-            subtitle="Technologies and tools I use for development, database work, and project workflows."
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="What I work with"
+          title="Skills & Technologies"
+          subtitle="Technologies and tools I use for development, database work, and project workflows."
+        />
 
         <Reveal>
           <LayoutGroup id="skill-filters">

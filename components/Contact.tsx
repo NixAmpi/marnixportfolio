@@ -17,13 +17,11 @@ export function Contact() {
   return (
     <section id="contact" className="section-glow py-24 sm:py-28">
       <Container className="max-w-5xl">
-        <Reveal>
-          <SectionHeading
-            eyebrow="Let's build something together"
-            title="Contact Me"
-            subtitle="I'm actively looking for internship and entry-level opportunities in software development, database management, and IT support."
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="Let's build something together"
+          title="Contact Me"
+          subtitle="I'm actively looking for internship and entry-level opportunities in software development, database management, and IT support."
+        />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
           <Reveal className="flex flex-col gap-3">

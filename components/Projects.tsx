@@ -6,19 +6,17 @@ import { isTodo } from "@/data/types";
 import { GithubIcon } from "@/components/icons";
 import { ProjectMedia } from "@/components/ProjectMedia";
 import { Chip, Container, SectionHeading, Text } from "@/components/ui";
-import { Reveal, RevealItem } from "@/components/Reveal";
+import { RevealItem } from "@/components/Reveal";
 
 export function Projects() {
   return (
     <section id="projects" className="section-glow py-24 sm:py-28">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow="Selected work"
-            title="Projects"
-            subtitle="Projects that show practical problem-solving, system planning, and application development experience."
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="Selected work"
+          title="Projects"
+          subtitle="Projects that show practical problem-solving, system planning, and application development experience."
+        />
 
         <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((p, i) => (

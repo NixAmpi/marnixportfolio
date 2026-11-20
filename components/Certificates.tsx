@@ -7,7 +7,7 @@ import { certificates } from "@/data/certificates";
 import { profile } from "@/data/profile";
 import { isTodo, type Certificate } from "@/data/types";
 import { Container, SectionHeading, Text } from "@/components/ui";
-import { Reveal, RevealItem } from "@/components/Reveal";
+import { RevealItem } from "@/components/Reveal";
 
 function CertImage({ cert, sizes }: { cert: Certificate; sizes: string }) {
   if (cert.image) {
@@ -33,13 +33,11 @@ export function Certificates() {
   return (
     <section id="certificates" className="section-glow py-24 sm:py-28">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow="Proof of learning"
-            title="Certificates"
-            subtitle="Certifications in programming, networking, and databases."
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="Proof of learning"
+          title="Certificates"
+          subtitle="Certifications in programming, networking, and databases."
+        />
 
         <ul className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
           {certificates.map((c, i) => (

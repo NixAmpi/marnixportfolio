@@ -8,13 +8,11 @@ export function Experience() {
   return (
     <section id="experience" className="section-glow py-24 sm:py-28">
       <Container className="max-w-4xl">
-        <Reveal>
-          <SectionHeading
-            eyebrow="My path so far"
-            title="Journey Timeline"
-            subtitle="Education, projects, and certifications that shaped how I build."
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="My path so far"
+          title="Journey Timeline"
+          subtitle="Education, projects, and certifications that shaped how I build."
+        />
 
         <ol className="relative ml-3 border-l border-transparent sm:ml-4">
           <span

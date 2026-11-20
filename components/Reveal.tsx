@@ -11,10 +11,10 @@ const reveal = (delay: number) =>
   }) as const;
 
 export function Reveal({ delay = 0, ...props }: HTMLMotionProps<"div"> & { delay?: number }) {
-  return <motion.div {...reveal(delay)} {...props} />;
+  return <motion.div data-reveal {...reveal(delay)} {...props} />;
 }
 
 /** Same as Reveal, for direct children of <ul>/<ol>. */
 export function RevealItem({ delay = 0, ...props }: HTMLMotionProps<"li"> & { delay?: number }) {
-  return <motion.li {...reveal(delay)} {...props} />;
+  return <motion.li data-reveal {...reveal(delay)} {...props} />;
 }

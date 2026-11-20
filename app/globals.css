@@ -52,6 +52,13 @@ section[id] {
   html {
     scroll-behavior: auto;
   }
+  /* Framer applies its "hidden" state before it can know the preference, so CSS
+     guarantees every scroll reveal is simply visible and still. */
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
   *,
   *::before,
   *::after {
@@ -250,6 +257,28 @@ html[data-intro="seen"] {
     animation: none;
   }
   .btn-shine::after {
+    display: none;
+  }
+}
+
+/* ---------- section eyebrow line ---------- */
+
+/* A soft highlight glides along the eyebrow line (transform only). */
+.eyebrow-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.9), transparent);
+  transform: translateX(-100%);
+  animation: eyebrow-shimmer 3.2s ease-in-out 1s infinite;
+}
+
+@keyframes eyebrow-shimmer {
+  60%, 100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow-line::after {
     display: none;
   }
 }

@@ -8,13 +8,11 @@ export function About() {
   return (
     <section id="about" className="section-glow py-24 sm:py-28">
       <Container>
-        <Reveal>
-          <SectionHeading
-            eyebrow="Get to know me"
-            title="About Me"
-            subtitle="A quick look at my background, interests, and career direction in Information Technology."
-          />
-        </Reveal>
+        <SectionHeading
+          eyebrow="Get to know me"
+          title="About Me"
+          subtitle="A quick look at my background, interests, and career direction in Information Technology."
+        />
 
         <div className="grid gap-8 lg:grid-cols-[1.25fr_1fr]">
           <div className="flex flex-col gap-6">
