@@ -69,6 +69,11 @@ export function HeroVisual() {
 
   return (
     <div ref={containerRef} className="relative h-full w-full">
+      {/* Soft glow + contact shadow under where the card hangs, so it feels grounded. */}
+      <div aria-hidden className="pointer-events-none absolute top-[86%] left-1/2 h-24 w-72 -translate-x-1/2 -translate-y-1/2 lg:top-[80%] lg:w-96">
+        <div className="absolute inset-0 rounded-[50%] bg-accent-violet/30 blur-3xl" />
+        <div className="absolute inset-x-12 top-1/2 h-4 -translate-y-1/2 rounded-[50%] bg-black/60 blur-xl" />
+      </div>
       <StaticCard hidden={ready} />
       {mode === "3d" && (
         <div className={`absolute inset-0 transition-opacity duration-500 ${ready ? "opacity-100" : "opacity-0"}`}>
