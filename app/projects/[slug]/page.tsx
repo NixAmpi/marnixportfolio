@@ -113,7 +113,7 @@ export default async function ProjectPage({ params }: Params) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/30"
               >
-                <ExternalLink className="size-4" aria-hidden /> Live Demo
+                <ExternalLink className="size-4" aria-hidden /> Visit Site
               </a>
             )}
           </div>
