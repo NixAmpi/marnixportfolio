@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink-950: #05060f;
+  --color-ink-900: #0b0c24;
+  --color-ink-800: #12143a;
+
+  --color-accent-violet: #7c5cff;
+  --color-accent-blue: #4f8cff;
+  --color-accent-cyan: #22d3ee;
+
+  --color-muted: #9aa3bf;
+  --color-eyebrow: #b3a1ff;
+}
+
+/* ---------- base ---------- */
+
+html {
+  scroll-behavior: smooth;
+  background: var(--color-ink-950);
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100svh;
+  color: #eef0ff;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgb(124 92 255 / 0.16), transparent 70%),
+    linear-gradient(180deg, var(--color-ink-950) 0%, var(--color-ink-900) 50%, var(--color-ink-950) 100%);
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(124 92 255 / 0.45);
+  color: #fff;
+}
+
+section[id] {
+  scroll-margin-top: 5rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-cyan);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- utilities ---------- */
+
+@utility glass {
+  background: rgb(255 255 255 / 0.03);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: var(--radius-2xl);
+  backdrop-filter: blur(12px);
+}
+
+@utility glass-hover {
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.3s ease,
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgb(255 255 255 / 0.22);
+    background-color: rgb(255 255 255 / 0.05);
+    box-shadow: 0 20px 50px -24px rgb(124 92 255 / 0.45);
+  }
+}
+
+@utility text-gradient {
+  background-image: linear-gradient(100deg, #9b82ff 0%, #5b95ff 50%, #22d3ee 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Darker stops than the text gradient so white labels keep AA contrast. */
+@utility bg-accent-gradient {
+  background-image: linear-gradient(110deg, #6747f0 0%, #3a68e8 55%, #0b8fb0 100%);
+}
+
+@utility section-glow {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 10% 15%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgb(79 140 255 / 0.08), transparent);
+    filter: blur(20px);
+  }
+}
+
+/* ---------- intro loader ---------- */
+
+.intro-loader {
+  animation: intro-out 0.35s ease 0.95s forwards;
+}
+
+.intro-loader-bar {
+  transform-origin: left;
+  animation: intro-bar 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+html[data-intro="seen"] .intro-loader {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-loader {
+    display: none;
+  }
+}
+
+@keyframes intro-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes intro-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
