@@ -35,20 +35,4 @@ export const certificates: Certificate[] = [
     description: "Hands-on network simulation practice.",
     credentialUrl: "TODO: Credly link",
   },
-  {
-    slug: "english-for-it-1",
-    title: "English for IT 1",
-    issuer: "Cisco Networking Academy",
-    year: "TODO: year",
-    description: "TODO: short description of English for IT 1.",
-    credentialUrl: "TODO: Credly link",
-  },
-  {
-    slug: "english-for-it-2",
-    title: "English for IT 2",
-    issuer: "Cisco Networking Academy",
-    year: "TODO: year",
-    description: "TODO: short description of English for IT 2.",
-    credentialUrl: "TODO: Credly link",
-  },
 ];

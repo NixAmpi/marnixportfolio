@@ -40,7 +40,8 @@ export const profile = {
 
 export const stats: Stat[] = [
   { value: "3", label: "Projects built across web, mobile, and database systems" },
-  { value: "6+", label: "Certifications in databases, networking, and programming" },
+  // Pearson IT Specialist – Databases, CCNA ITN, Python Essentials 1, Python Essentials 2, Packet Tracer.
+  { value: "5", label: "Certifications in databases, networking, and programming" },
   { value: "5", label: "Core focus areas, from web to systems development" },
 ];
 

@@ -11,7 +11,7 @@ export const experience: ExperienceEntry[] = [
     tags: ["Education"],
   },
   {
-    period: "TODO: dates",
+    period: "2026",
     title: "Project Lead & Developer — CleanDasma",
     organization: "Dasmariñas City, Cavite",
     description:
