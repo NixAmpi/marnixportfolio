@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -19,6 +18,7 @@ import { getProject, projects } from "@/data/projects";
 import { profile } from "@/data/profile";
 import { isTodo } from "@/data/types";
 import { GithubIcon } from "@/components/icons";
+import { PhoneCarousel } from "@/components/PhoneCarousel";
 import { ProjectMedia } from "@/components/ProjectMedia";
 import { Chip, Container, Text } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
@@ -120,39 +120,29 @@ export default async function ProjectPage({ params }: Params) {
           </div>
         </header>
 
-        <div
-          className={`glass relative mt-10 overflow-hidden ${project.phoneScreenshots ? "aspect-[4/5] sm:aspect-[16/9]" : "aspect-[16/9]"}`}
-        >
-          <ProjectMedia
-            src={cover?.src ?? project.thumbnail}
-            alt={cover?.alt ?? `${project.title} screenshot`}
-            sizes="(min-width: 1024px) 976px, 100vw"
-            phone={project.phoneScreenshots}
-            preload
-          />
-        </div>
-        {rest.length > 0 && project.phoneScreenshots && (
-          <ul className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {rest.map((img) => (
-              <li key={img.src}>
-                <figure>
-                  <div className="relative aspect-[640/1303] overflow-hidden rounded-[1.1rem] border-[3px] border-white/15 bg-white shadow-xl shadow-black/50">
-                    <Image src={img.src} alt={img.alt} fill sizes="(min-width: 1024px) 190px, (min-width: 640px) 30vw, 45vw" className="object-cover object-top" />
+        {project.phoneScreenshots && project.gallery.length > 1 ? (
+          <PhoneCarousel shots={project.gallery} title={project.title} />
+        ) : (
+          <>
+            <div className="glass relative mt-10 aspect-[16/9] overflow-hidden">
+              <ProjectMedia
+                src={cover?.src ?? project.thumbnail}
+                alt={cover?.alt ?? `${project.title} screenshot`}
+                sizes="(min-width: 1024px) 976px, 100vw"
+                phone={project.phoneScreenshots}
+                preload
+              />
+            </div>
+            {rest.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {rest.map((img) => (
+                  <div key={img.src} className="glass relative aspect-[16/10] overflow-hidden">
+                    <ProjectMedia src={img.src} alt={img.alt} sizes="(min-width: 640px) 320px, 50vw" />
                   </div>
-                  {img.caption && <figcaption className="mt-2 text-center text-xs font-medium text-muted">{img.caption}</figcaption>}
-                </figure>
-              </li>
-            ))}
-          </ul>
-        )}
-        {rest.length > 0 && !project.phoneScreenshots && (
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {rest.map((img) => (
-              <div key={img.src} className="glass relative aspect-[16/10] overflow-hidden">
-                <ProjectMedia src={img.src} alt={img.alt} phone={project.phoneScreenshots} sizes="(min-width: 640px) 320px, 50vw" />
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
