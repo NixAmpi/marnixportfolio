@@ -7,7 +7,8 @@ Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · Framer Motion · Reac
 ```bash
 npm install
 npm run dev     # http://localhost:3000
-npm run build   # production build
+npm run build   # static export into ./out (index.html + one page per project)
+npx serve out   # preview the exported site
 npm run lint
 ```
 
@@ -33,9 +34,18 @@ Any string starting with `TODO` renders as a dashed amber placeholder — search
 - `public/projects/<slug>/…` — screenshots; set `thumbnail` / `gallery` in `data/projects.ts`.
 - `public/certificates/…` — badge images; set `image` in `data/certificates.ts`.
 
-## Deploy (Vercel)
+## Deploy (Cloudflare Pages)
 
-Push to GitHub, import the repo in Vercel (framework auto-detected, no settings needed).
-Optionally set `NEXT_PUBLIC_SITE_URL` to your custom domain for correct Open Graph URLs.
+The site is a fully static export (`output: "export"` in `next.config.ts`), so no server is needed.
+
+1. Push the repo to GitHub and create a Cloudflare Pages project from it.
+2. Build command: `npm run build` · Build output directory: `out`.
+3. Environment variables (Settings → Variables):
+   - `NODE_VERSION` = `22`
+   - `NEXT_PUBLIC_SITE_URL` = your final URL (e.g. `https://marnix.pages.dev`) so link previews use the right address.
+   - `NEXT_PUBLIC_FORMSPREE_ID` = your Formspree form ID, to have the contact form send messages directly
+     (without it, the form opens the visitor's email app).
+
+`public/_headers` sets Cloudflare response headers (Open Graph image content type, long caching for hashed assets).
 
 The previous static site is kept in `legacy/index.html`.

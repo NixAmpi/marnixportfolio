@@ -1,7 +1,10 @@
 import { ImageResponse } from "next/og";
 import { profile } from "@/data/profile";
 
-export const alt = `${profile.name} — Portfolio`;
+// Rendered once at build time into a static PNG (required for `output: "export"`).
+export const dynamic = "force-static";
+
+export const alt =`${profile.name} — Portfolio`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

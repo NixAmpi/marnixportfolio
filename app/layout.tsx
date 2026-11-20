@@ -19,9 +19,12 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-// TODO: once deployed, set NEXT_PUBLIC_SITE_URL in Vercel to your custom domain (Vercel's own URL is used otherwise).
+// TODO: set NEXT_PUBLIC_SITE_URL (e.g. https://yourname.pages.dev or your domain) in the host's
+// build environment. Absolute URLs (Open Graph image) are baked in at build time.
+// Fallbacks: Cloudflare Pages' per-deployment URL, then Vercel's, then local dev.
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.CF_PAGES_URL ??
   (process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : "http://localhost:3000");
