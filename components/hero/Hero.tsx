@@ -12,11 +12,11 @@ export function Hero() {
     <section id="home" className="relative isolate overflow-hidden lg:min-h-svh">
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-40 right-[-10%] -z-10 size-[44rem] rounded-full bg-[radial-gradient(closest-side,rgba(124,92,255,0.28),transparent)] blur-2xl"
+        className="aurora pointer-events-none absolute -top-40 right-[-10%] -z-10 size-[44rem] rounded-full bg-[radial-gradient(closest-side,rgba(124,92,255,0.28),transparent)] blur-2xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-1/3 left-[-15%] -z-10 size-[36rem] rounded-full bg-[radial-gradient(closest-side,rgba(34,211,238,0.12),transparent)] blur-2xl"
+        className="aurora aurora-slow pointer-events-none absolute top-1/3 left-[-15%] -z-10 size-[36rem] rounded-full bg-[radial-gradient(closest-side,rgba(34,211,238,0.12),transparent)] blur-2xl"
       />
 
       <div className="mx-auto grid max-w-6xl grid-cols-1 lg:min-h-svh lg:grid-cols-2">

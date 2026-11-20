@@ -4,6 +4,9 @@ import { Loader } from "@/components/Loader";
 import { MotionProvider } from "@/components/MotionProvider";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { Grain } from "@/components/effects/Grain";
+import { ScrollProgress } from "@/components/effects/ScrollProgress";
+import { SmoothScroll } from "@/components/effects/SmoothScroll";
 import { profile } from "@/data/profile";
 import "./globals.css";
 
@@ -62,6 +65,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <Loader />
+        <SmoothScroll />
+        <ScrollProgress />
+        <Grain />
         <MotionProvider>
           <Navbar />
           <main id="main">{children}</main>
