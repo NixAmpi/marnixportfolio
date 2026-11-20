@@ -332,6 +332,48 @@ html[data-intro="seen"] {
   }
 }
 
+/* ---------- tech marquee ---------- */
+
+.marquee {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+/* Two identical rows; sliding by exactly one row width (-50%) loops seamlessly. */
+.marquee-track {
+  animation: marquee 38s linear infinite;
+  will-change: transform;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .marquee-track {
+    width: auto;
+    justify-content: center;
+    animation: none;
+  }
+  .marquee-row {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 1.25rem;
+    padding-inline: 1rem;
+  }
+  .marquee-copy {
+    display: none;
+  }
+}
+
 /* ---------- section eyebrow line ---------- */
 
 /* A soft highlight glides along the eyebrow line (transform only). */
