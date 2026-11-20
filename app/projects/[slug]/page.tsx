@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   ExternalLink,
   Layers,
@@ -20,12 +21,23 @@ import { isTodo } from "@/data/types";
 import { GithubIcon } from "@/components/icons";
 import { ScreenshotCarousel } from "@/components/ScreenshotCarousel";
 import { ProjectMedia } from "@/components/ProjectMedia";
+import { ProjectToc, type TocItem } from "@/components/project/ProjectToc";
 import { Chip, Container, Text } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
 
 type Params = { params: Promise<{ slug: string }> };
 
 export const dynamicParams = false;
+
+const toc: TocItem[] = [
+  { id: "overview", label: "Overview" },
+  { id: "problem", label: "Problem" },
+  { id: "solution", label: "Solution" },
+  { id: "features", label: "Features" },
+  { id: "stack", label: "Stack" },
+  { id: "process", label: "Process" },
+  { id: "result", label: "Result" },
+];
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -43,18 +55,20 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 function DetailCard({
+  id,
   icon: IconComponent,
   title,
   tone,
   children,
 }: {
+  id: string;
   icon: LucideIcon;
   title: string;
   tone: string;
   children: React.ReactNode;
 }) {
   return (
-    <Reveal className="glass p-6 sm:p-7">
+    <Reveal id={id} className="glass scroll-mt-24 p-6 sm:p-7">
       <h2 className="mb-4 flex items-center gap-3 text-lg font-bold text-white">
         <span className={`grid size-9 place-items-center rounded-lg ${tone}`}>
           <IconComponent className="size-5" aria-hidden />
@@ -72,9 +86,11 @@ export default async function ProjectPage({ params }: Params) {
 
   const codeUrl = isTodo(project.githubUrl) ? profile.github.url : project.githubUrl;
   const [cover, ...rest] = project.gallery;
+  const next = projects[(projects.indexOf(project) + 1) % projects.length];
 
   return (
     <article className="pt-28 pb-24">
+      <ProjectToc items={toc} />
       <Container className="max-w-5xl">
         <Link
           href="/#projects"
@@ -147,17 +163,17 @@ export default async function ProjectPage({ params }: Params) {
 
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           <div className="md:col-span-2">
-            <DetailCard icon={BookOpen} title="Overview" tone="bg-violet-500/15 text-violet-300">
+            <DetailCard id="overview" icon={BookOpen} title="Overview" tone="bg-violet-500/15 text-violet-300">
               <Text value={project.overview} />
             </DetailCard>
           </div>
-          <DetailCard icon={Target} title="Problem" tone="bg-rose-500/15 text-rose-300">
+          <DetailCard id="problem" icon={Target} title="Problem" tone="bg-rose-500/15 text-rose-300">
             <Text value={project.problem} />
           </DetailCard>
-          <DetailCard icon={Lightbulb} title="Solution" tone="bg-amber-500/15 text-amber-300">
+          <DetailCard id="solution" icon={Lightbulb} title="Solution" tone="bg-amber-500/15 text-amber-300">
             <Text value={project.solution} />
           </DetailCard>
-          <DetailCard icon={ListChecks} title="Key Features" tone="bg-emerald-500/15 text-emerald-300">
+          <DetailCard id="features" icon={ListChecks} title="Key Features" tone="bg-emerald-500/15 text-emerald-300">
             <ul className="space-y-2">
               {project.features.map((f) => (
                 <li key={f} className="flex gap-3">
@@ -167,7 +183,7 @@ export default async function ProjectPage({ params }: Params) {
               ))}
             </ul>
           </DetailCard>
-          <DetailCard icon={Layers} title="Technology Stack" tone="bg-blue-500/15 text-blue-300">
+          <DetailCard id="stack" icon={Layers} title="Technology Stack" tone="bg-blue-500/15 text-blue-300">
             <div className="flex flex-wrap gap-2">
               {project.stack.map((s) => (
                 <Chip key={s}>{s}</Chip>
@@ -175,7 +191,7 @@ export default async function ProjectPage({ params }: Params) {
             </div>
           </DetailCard>
           <div className="md:col-span-2">
-            <DetailCard icon={Workflow} title="Development Process" tone="bg-cyan-500/15 text-cyan-300">
+            <DetailCard id="process" icon={Workflow} title="Development Process" tone="bg-cyan-500/15 text-cyan-300">
               <ol className="space-y-3">
                 {project.process.map((step, i) => (
                   <li key={step} className="flex gap-4">
@@ -191,11 +207,29 @@ export default async function ProjectPage({ params }: Params) {
             </DetailCard>
           </div>
           <div className="md:col-span-2">
-            <DetailCard icon={Trophy} title="Result" tone="bg-fuchsia-500/15 text-fuchsia-300">
+            <DetailCard id="result" icon={Trophy} title="Result" tone="bg-fuchsia-500/15 text-fuchsia-300">
               <Text value={project.result} />
             </DetailCard>
           </div>
         </div>
+
+        {next && next.slug !== project.slug && (
+          <Link
+            href={`/projects/${next.slug}`}
+            className="glass glass-hover fx-card group mt-16 flex items-center justify-between gap-6 p-6 sm:p-8"
+          >
+            <span className="min-w-0">
+              <span className="block text-xs font-semibold tracking-[0.25em] text-eyebrow uppercase">Next project</span>
+              <span className="mt-2 block text-2xl font-extrabold text-white sm:text-3xl">{next.title}</span>
+              <span className="mt-2 line-clamp-2 block text-sm text-muted">
+                <Text value={next.summary} />
+              </span>
+            </span>
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent-gradient text-white transition-transform duration-300 group-hover:translate-x-1">
+              <ArrowRight className="size-5" aria-hidden />
+            </span>
+          </Link>
+        )}
       </Container>
     </article>
   );

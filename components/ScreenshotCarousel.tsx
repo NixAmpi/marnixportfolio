@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Maximize2, X } from "lucide-react";
 import { FramedShot, frameBox, screenshotBackdrop, type FrameKind } from "@/components/ScreenshotFrame";
 
 type Shot = { src: string; alt: string; caption?: string };
@@ -33,6 +34,13 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
   const n = shots.length;
   const go = (i: number) => setActive(((i % n) + n) % n);
   const L = layout[frame];
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const openLightbox = () => {
+    dialogRef.current?.showModal();
+    window.__lenis?.stop(); // keep the page behind still while the lightbox is open
+  };
+  const closeLightbox = () => dialogRef.current?.close();
+  const current = shots[active];
 
   return (
     <section
@@ -62,10 +70,10 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
             <button
               key={shot.src}
               type="button"
-              tabIndex={Math.abs(d) === 1 ? 0 : -1}
+              tabIndex={Math.abs(d) <= 1 ? 0 : -1}
               aria-hidden={Math.abs(d) > 1}
-              aria-label={d === 0 ? undefined : `Show ${shot.caption ?? `screenshot ${i + 1}`}`}
-              onClick={() => d !== 0 && go(i)}
+              aria-label={d === 0 ? `Enlarge ${shot.caption ?? "screenshot"}` : `Show ${shot.caption ?? `screenshot ${i + 1}`}`}
+              onClick={() => (d === 0 ? openLightbox() : go(i))}
               disabled={far}
               style={{
                 transform: `translateX(calc(-50% + ${d * L.step}%)) scale(${scale})`,
@@ -75,7 +83,7 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
                 filter: d === 0 ? "none" : `brightness(${Math.abs(d) === 1 ? 0.55 : 0.35})`,
               }}
               className={`absolute left-1/2 block overflow-hidden border-white/15 bg-white text-left shadow-2xl shadow-black/60 transition-[transform,opacity,filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${frameBox[frame]} ${L.position} ${
-                d === 0 ? "cursor-default" : "cursor-pointer"
+                d === 0 ? "group/shot cursor-zoom-in" : "cursor-pointer"
               } ${far ? "pointer-events-none" : ""}`}
             >
               <span className={frame === "phone" ? "absolute inset-0" : "block"}>
@@ -87,6 +95,14 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
                   preload={i === 0}
                 />
               </span>
+              {d === 0 && (
+                <span
+                  aria-hidden
+                  className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-full bg-ink-950/75 text-white opacity-0 backdrop-blur transition-opacity duration-300 group-hover/shot:opacity-100 group-focus-visible/shot:opacity-100"
+                >
+                  <Maximize2 className="size-4" />
+                </span>
+              )}
             </button>
           );
         })}
@@ -129,6 +145,54 @@ export function ScreenshotCarousel({ shots, title, frame }: { shots: Shot[]; tit
           ))}
         </div>
       </div>
+
+      {/* Lightbox: native <dialog> gives focus trapping, Escape to close and an inert page. */}
+      <dialog
+        ref={dialogRef}
+        aria-label={`${title}: ${current.caption ?? "screenshot"}`}
+        data-lenis-prevent
+        onClick={(e) => {
+          if (e.target === e.currentTarget) closeLightbox();
+        }}
+        onClose={() => window.__lenis?.start()}
+        className="m-auto max-h-[94vh] max-w-[96vw] overflow-visible bg-transparent p-0 text-white backdrop:bg-black/85 backdrop:backdrop-blur-sm"
+      >
+        {/* First focusable element, so it receives focus when the dialog opens. */}
+        <button
+          type="button"
+          onClick={closeLightbox}
+          aria-label="Close"
+          className="fixed top-4 right-4 grid size-10 place-items-center rounded-full border border-white/20 bg-ink-950/80 text-white hover:bg-ink-950"
+        >
+          <X className="size-5" aria-hidden />
+        </button>
+        <figure className="flex flex-col items-center gap-3">
+          <div className="relative overflow-hidden rounded-xl border border-white/15 bg-white shadow-2xl">
+            <Image
+              src={current.src}
+              alt={current.alt}
+              width={frame === "phone" ? 640 : 1600}
+              height={frame === "phone" ? 1303 : 731}
+              sizes="96vw"
+              className={frame === "phone" ? "h-[82vh] w-auto" : "h-auto max-h-[80vh] w-[min(92vw,1400px)] object-contain"}
+            />
+          </div>
+          <figcaption className="flex items-center gap-3 text-sm">
+            <button type="button" onClick={() => go(active - 1)} aria-label="Previous screenshot" className="grid size-9 place-items-center rounded-full border border-white/20 bg-white/10 hover:bg-white/20">
+              <ChevronLeft className="size-4" aria-hidden />
+            </button>
+            <span className="min-w-36 text-center font-semibold">
+              {current.caption}
+              <span className="ml-2 font-normal text-slate-300">
+                {active + 1} / {n}
+              </span>
+            </span>
+            <button type="button" onClick={() => go(active + 1)} aria-label="Next screenshot" className="grid size-9 place-items-center rounded-full border border-white/20 bg-white/10 hover:bg-white/20">
+              <ChevronRight className="size-4" aria-hidden />
+            </button>
+          </figcaption>
+        </figure>
+      </dialog>
     </section>
   );
 }
