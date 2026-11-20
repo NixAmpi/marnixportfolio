@@ -26,7 +26,7 @@ export function ProjectMedia({
       // Anchored to the bottom and nudged down so the frame "rises" from the edge and clears the corner badge.
       <div className={`absolute inset-0 flex items-end justify-center ${screenshotBackdrop}`}>
         <div
-          className={`relative translate-y-4 overflow-hidden border-white/15 bg-white shadow-2xl shadow-black/60 transition duration-500 group-hover:translate-y-2 ${
+          className={`relative translate-y-4 overflow-hidden border-white/15 bg-white shadow-2xl shadow-black/60 transition duration-500 group-hover:translate-y-2 group-hover:scale-105 ${
             frame === "phone" ? "aspect-[640/1303] h-[86%] rounded-[1.1rem] border-[3px]" : "w-[86%] rounded-lg border"
           }`}
         >
@@ -44,7 +44,7 @@ export function ProjectMedia({
         sizes={sizes}
         loading={preload ? "eager" : undefined}
         fetchPriority={preload ? "high" : undefined}
-        className="object-cover transition duration-500 group-hover:scale-[1.03]"
+        className="object-cover transition duration-500 group-hover:scale-105"
       />
     );
   }

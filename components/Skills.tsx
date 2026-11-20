@@ -65,7 +65,7 @@ export function Skills() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.92 }}
                 transition={{ duration: 0.25 }}
-                className="glass glass-hover flex items-center gap-3 p-4"
+                className="glass glass-hover fx-card flex items-center gap-3 p-4"
               >
                 <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-white/10 bg-gradient-to-br from-accent-violet/25 to-accent-cyan/15 text-white">
                   <Icon name={s.icon} className="size-5" />

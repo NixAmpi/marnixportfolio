@@ -7,6 +7,7 @@ import { GithubIcon } from "@/components/icons";
 import { ProjectMedia } from "@/components/ProjectMedia";
 import { Chip, Container, SectionHeading, Text } from "@/components/ui";
 import { RevealItem } from "@/components/Reveal";
+import { TiltCard } from "@/components/effects/TiltCard";
 
 export function Projects() {
   return (
@@ -20,7 +21,8 @@ export function Projects() {
 
         <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((p, i) => (
-            <RevealItem key={p.slug} delay={i * 0.08} className="glass glass-hover group relative flex h-full flex-col overflow-hidden">
+            <RevealItem key={p.slug} delay={i * 0.08} className="h-full">
+              <TiltCard className="glass glass-hover fx-card group relative flex h-full flex-col overflow-hidden">
                 <div className="relative aspect-[16/10] overflow-hidden border-b border-white/10">
                   <ProjectMedia
                     src={p.thumbnail}
@@ -34,6 +36,12 @@ export function Projects() {
                     }`}
                   >
                     {p.category}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center bg-gradient-to-t from-ink-950/90 to-transparent pt-10 pb-3 text-sm font-semibold text-white opacity-0 transition duration-300 group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:translate-y-0 group-hover:opacity-100"
+                  >
+                    View case study →
                   </span>
                 </div>
                 <div className="flex flex-1 flex-col p-5 sm:p-6">
@@ -66,6 +74,7 @@ export function Projects() {
                     </a>
                   </div>
                 </div>
+              </TiltCard>
             </RevealItem>
           ))}
         </ul>

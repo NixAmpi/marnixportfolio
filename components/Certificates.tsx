@@ -46,7 +46,7 @@ export function Certificates() {
                   type="button"
                   onClick={() => open(c)}
                   aria-haspopup="dialog"
-                  className="glass glass-hover flex h-full w-full flex-col overflow-hidden text-left"
+                  className="glass glass-hover fx-card flex h-full w-full flex-col overflow-hidden text-left"
                 >
                   <span className="relative block aspect-[4/3] w-full border-b border-white/10">
                     <CertImage cert={c} sizes="(min-width: 1024px) 360px, 50vw" />

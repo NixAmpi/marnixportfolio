@@ -25,7 +25,7 @@ export function Experience() {
                 aria-hidden
                 className="absolute top-6 -left-[7px] size-3.5 rounded-full border-2 border-accent-violet bg-ink-950 shadow-[0_0_0_4px_rgba(124,92,255,0.15),0_0_14px_rgba(124,92,255,0.8)]"
               />
-              <Reveal className="glass glass-hover p-5 sm:p-6">
+              <Reveal className="glass glass-hover fx-card p-5 sm:p-6">
                 <p className="text-xs font-semibold tracking-[0.18em] text-muted uppercase">
                   <Text value={e.period} />
                 </p>
@@ -48,7 +48,7 @@ export function Experience() {
           <h3 className="mb-6 text-center text-sm font-semibold tracking-[0.2em] text-eyebrow uppercase">Highlights</h3>
           <div className="grid gap-4 sm:grid-cols-3">
             {highlights.map((h, i) => (
-              <Reveal key={h.title} delay={i * 0.06} className="glass glass-hover p-5">
+              <Reveal key={h.title} delay={i * 0.06} className="glass glass-hover fx-card p-5">
                 <span className="mb-3 grid size-10 place-items-center rounded-lg bg-gradient-to-br from-accent-violet/30 to-accent-cyan/20 text-white">
                   <Icon name={h.icon} className="size-5" />
                 </span>
