@@ -171,11 +171,11 @@ export function KeyboardCase({
     <group>
       {/* Aluminium wedge body */}
       <mesh geometry={body.geometry}>
-        <meshPhysicalMaterial color="#3b3f4a" metalness={0.8} roughness={0.35} clearcoat={0.3} clearcoatRoughness={0.4} />
+        <meshPhysicalMaterial color="#5a5f6c" metalness={0.8} roughness={0.35} clearcoat={0.3} clearcoatRoughness={0.4} />
       </mesh>
       {/* Raised rim around the recessed plate */}
       <mesh geometry={rim}>
-        <meshPhysicalMaterial color="#454a57" metalness={0.8} roughness={0.32} clearcoat={0.35} />
+        <meshPhysicalMaterial color="#666b78" metalness={0.8} roughness={0.32} clearcoat={0.35} />
       </mesh>
       {/* Recessed plate where the switches sit */}
       <mesh position={[(plate.minX + plate.maxX) / 2, -PLATE_T / 2, (plate.minZ + plate.maxZ) / 2]}>

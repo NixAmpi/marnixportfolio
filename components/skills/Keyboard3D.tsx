@@ -54,6 +54,7 @@ const STEM_COLOR: Record<SoundProfile, string> = { thocky: "#d9a55b", clacky: "#
 const YAW = THREE.MathUtils.degToRad(-30);
 const ELEVATION = THREE.MathUtils.degToRad(60); // camera 30° off straight-down
 const FOV = 26;
+const MAX_LOOK = { az: THREE.MathUtils.degToRad(5), el: THREE.MathUtils.degToRad(4) };
 
 /** Sculpted OEM rows: per-row height scale and tilt (degrees, + faces the typist), back → front. */
 const SCULPT = {
@@ -84,24 +85,71 @@ export default function Keyboard3D(props: KeyboardProps) {
       dpr={props.compact ? [1, 1.25] : [1, 1.75]}
       gl={{ antialias: true, alpha: true }}
       camera={{ fov: FOV, near: 0.1, far: 100 }}
-      frameloop={props.active ? "always" : "never"}
+      frameloop={props.active ? "demand" : "never"}
       style={{ touchAction: "pan-y" }}
       aria-hidden
     >
       <ResumeLoop active={props.active} />
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[-4, 9, 6]} intensity={1.6} />
-      <directionalLight position={[6, 4, -4]} intensity={0.4} color="#9fb4ff" />
+      <FrameDriver active={props.active} keyTimes={props.keyTimes} boostKey={`${props.focused}|${props.dimmed.join()}|${props.soundOn}|${props.profile}`} />
+      {/* Studio lighting: soft fill, a warm key light, and a purple rim light from behind. */}
+      <ambientLight intensity={0.25} />
+      <directionalLight position={[-5, 9, 7]} intensity={2.2} color="#fff4e8" />
+      <directionalLight position={[2, 4, -9]} intensity={3.2} color="#8b5cf6" />
       <Suspense fallback={null}>
         <Board {...props} />
-        <Environment resolution={128}>
-          <Lightformer intensity={2.2} position={[0, 6, 4]} scale={[12, 4, 1]} />
-          <Lightformer intensity={0.9} color="#a78bfa" position={[-8, 2, -2]} rotation={[0, Math.PI / 2, 0]} scale={[10, 4, 1]} />
-          <Lightformer intensity={0.7} color="#22d3ee" position={[8, 2, -2]} rotation={[0, -Math.PI / 2, 0]} scale={[10, 4, 1]} />
+        {/* Softboxes for reflections on the aluminium case (no HDR download). */}
+        <Environment resolution={128} environmentIntensity={0.85}>
+          <Lightformer form="rect" intensity={3} position={[0, 7, 1]} rotation={[Math.PI / 2, 0, 0]} scale={[14, 6, 1]} />
+          <Lightformer form="rect" intensity={1.6} position={[0, 2.5, 9]} scale={[12, 2, 1]} />
+          <Lightformer form="rect" intensity={1.4} color="#a78bfa" position={[-9, 2, -1]} rotation={[0, Math.PI / 2, 0]} scale={[10, 3, 1]} />
+          <Lightformer form="rect" intensity={1.1} color="#22d3ee" position={[9, 2, -1]} rotation={[0, -Math.PI / 2, 0]} scale={[10, 3, 1]} />
         </Environment>
       </Suspense>
     </Canvas>
   );
+}
+
+/**
+ * On-demand rendering: 30 fps while idle (slow float + RGB cycle look the same), full rate
+ * for 1.5 s after any interaction or while keys are animating. Stops when off-screen.
+ */
+function FrameDriver({ active, keyTimes, boostKey }: { active: boolean; keyTimes: React.RefObject<KeyTimes>; boostKey: string }) {
+  const invalidate = useThree((s) => s.invalidate);
+  const gl = useThree((s) => s.gl);
+  const boostUntil = useRef(0);
+
+  useEffect(() => {
+    boostUntil.current = performance.now() + 1500; // filter / focus / sound changes animate
+  }, [boostKey]);
+
+  useEffect(() => {
+    if (!active) return;
+    const el = gl.domElement;
+    const bump = () => (boostUntil.current = performance.now() + 1500);
+    el.addEventListener("pointermove", bump);
+    el.addEventListener("pointerdown", bump);
+    let raf = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      const times = keyTimes.current;
+      let latest = -10;
+      for (let i = 0; i < times.down.length; i++) latest = Math.max(latest, times.down[i], times.up[i]);
+      const keysMoving = t / 1000 - latest < 0.8;
+      if (t < boostUntil.current || keysMoving || t - last >= 1000 / 30 - 2) {
+        invalidate();
+        last = t;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("pointermove", bump);
+      el.removeEventListener("pointerdown", bump);
+    };
+  }, [active, gl, invalidate, keyTimes]);
+
+  return null;
 }
 
 type CapClass = {
@@ -326,9 +374,10 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
 
     const f = floatRef.current;
     if (f) {
-      f.position.y = Math.sin(state.clock.elapsedTime * 0.9) * 0.06;
-      f.rotation.x += (-state.pointer.y * 0.06 - f.rotation.x) * (1 - Math.exp(-dt * 3));
-      f.rotation.z += (-state.pointer.x * 0.06 - f.rotation.z) * (1 - Math.exp(-dt * 3));
+      // Slow idle float; the camera (not the board) follows the mouse — see CameraRig.
+      const t = state.clock.elapsedTime;
+      f.position.y = Math.sin(t * 0.9) * 0.06;
+      f.rotation.z = Math.sin(t * 0.5) * 0.008;
     }
   });
 
@@ -347,7 +396,7 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
 
   return (
     <>
-      <FitCamera width={box.maxX - box.minX} depth={box.maxZ - box.minZ} />
+      <CameraRig width={box.maxX - box.minX} depth={box.maxZ - box.minZ} />
       <group rotation={[0, YAW, 0]}>
         <ContactShadows position={[0, tableY - 0.02, 0]} scale={Math.max(box.maxX - box.minX, box.maxZ - box.minZ) * 1.6} blur={2.4} opacity={0.6} far={1.5} frames={1} />
         <FloorGlow box={box} keyTimes={keyTimes} tableY={tableY} />
@@ -424,10 +473,18 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
   );
 }
 
-/** Places the camera (30° off top-down) so the whole keyboard fits the canvas at any aspect. */
-function FitCamera({ width, depth }: { width: number; depth: number }) {
+/**
+ * Frames the keyboard (camera 30° off top-down, sized so the case fits any aspect) and gently
+ * follows the mouse: up to ~5° around and ~4° up/down, eased. Returns to centre when the
+ * pointer leaves the canvas.
+ */
+function CameraRig({ width, depth }: { width: number; depth: number }) {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
   const size = useThree((s) => s.size);
+  const gl = useThree((s) => s.gl);
+  const dist = useRef(10);
+  const aim = useRef({ x: 0, y: 0 });
+  const look = useRef({ az: 0, el: 0 });
 
   useLayoutEffect(() => {
     const aspect = size.width / size.height;
@@ -437,12 +494,36 @@ function FitCamera({ width, depth }: { width: number; depth: number }) {
     const spanZ = Math.abs(width * Math.sin(YAW)) + Math.abs(depth * Math.cos(YAW));
     const halfW = spanX / 2;
     const halfH = (spanZ * Math.sin(ELEVATION)) / 2 + 0.6;
-    const dist = Math.max(halfW / tanX, halfH / tanY) * 1.02 + spanZ * 0.12;
-    camera.position.set(0, dist * Math.sin(ELEVATION), dist * Math.cos(ELEVATION));
-    camera.lookAt(0, -0.1, 0);
+    dist.current = Math.max(halfW / tanX, halfH / tanY) * 1.06 + spanZ * 0.12;
     camera.updateProjectionMatrix();
   }, [camera, size.width, size.height, width, depth]);
 
+  useEffect(() => {
+    const el = gl.domElement;
+    const move = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") return;
+      const r = el.getBoundingClientRect();
+      aim.current = { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: ((e.clientY - r.top) / r.height) * 2 - 1 };
+    };
+    const leave = () => (aim.current = { x: 0, y: 0 });
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerleave", leave);
+    return () => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerleave", leave);
+    };
+  }, [gl]);
+
+  useFrame((_, delta) => {
+    const k = 1 - Math.exp(-Math.min(delta, 1 / 30) * 2.5);
+    const l = look.current;
+    l.az += (aim.current.x * MAX_LOOK.az - l.az) * k;
+    l.el += (-aim.current.y * MAX_LOOK.el - l.el) * k;
+    const el = ELEVATION + l.el;
+    const d = dist.current;
+    camera.position.set(d * Math.cos(el) * Math.sin(l.az), d * Math.sin(el), d * Math.cos(el) * Math.cos(l.az));
+    camera.lookAt(0, -0.1, 0);
+  });
+
   return null;
 }
-
