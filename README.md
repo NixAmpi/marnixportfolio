@@ -28,8 +28,13 @@ Any string starting with `TODO` renders as a dashed amber placeholder — search
 
 ## Assets
 
-- `public/lanyard/card.png` — 3D ID card face (800×1125). Replace with your own design/photo, same size.
+- `public/lanyard/card.png` — 3D ID card face (800×1125). Replace with your own design/photo, same size,
+  then run `node scripts/optimize-card.mjs` to rebuild the WebP copies the site actually loads.
 - `public/lanyard/card-back.png`, `band.png` — card back and strap texture.
+- `public/skills/*.svg` — white keycap logos for the Skills keyboard (`node scripts/generate-skill-logos.mjs` restores them).
+- `public/sounds/keyboard/<thocky|clacky|clicky>/*.wav` — keyboard switch sounds (synthesized, CC0).
+  See `public/sounds/CREDITS.md` for the file list and how to drop in your own recordings;
+  `node scripts/generate-key-sounds.mjs` restores the defaults.
 - `public/cv/Marnix_Ampeloquio_CV.pdf` — the Download CV button.
 - `public/projects/<slug>/…` — screenshots; set `thumbnail` / `gallery` in `data/projects.ts`.
 - `public/certificates/…` — badge images; set `image` in `data/certificates.ts`.
