@@ -23,7 +23,12 @@ export type KeyboardProps = {
   focused: number | null;
   /** Press timestamps (performance.now() / 1000) per key, written by the parent. */
   pressTimes: React.RefObject<Float64Array>;
+  /** Key goes down (mouse press). */
   onPress: (index: number) => void;
+  /** Key comes back up (mouse release). */
+  onRelease: (index: number) => void;
+  /** Touch/pen tap: down then up. */
+  onTap: (index: number) => void;
   active: boolean;
   compact: boolean;
   onReady?: () => void;
@@ -105,7 +110,7 @@ function useKeyTextures(skills: Skill[]) {
   );
 }
 
-function Board({ skills, dimmed, focused, pressTimes, onPress, compact, onReady }: KeyboardProps) {
+function Board({ skills, dimmed, focused, pressTimes, onPress, onRelease, onTap, compact, onReady }: KeyboardProps) {
   const cols = compact ? 4 : 6;
   const rows = Math.ceil(skills.length / cols);
   const plateW = cols * KEY.pitch + PLATE.margin * 2;
@@ -149,6 +154,22 @@ function Board({ skills, dimmed, focused, pressTimes, onPress, compact, onReady 
   const floatRef = useRef<THREE.Group>(null);
   const hovered = useRef<number | null>(null);
   const lastPointer = useRef<string>("mouse");
+  const held = useRef<number | null>(null);
+
+  // A mouse press is released wherever the button comes up, even off the key.
+  useEffect(() => {
+    const up = () => {
+      if (held.current === null) return;
+      onRelease(held.current);
+      held.current = null;
+    };
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    return () => {
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+  }, [onRelease]);
   const dark = useMemo(() => new THREE.Color("#1a1c33"), []);
   const gl = useThree((s) => s.gl);
 
@@ -238,11 +259,14 @@ function Board({ skills, dimmed, focused, pressTimes, onPress, compact, onReady 
               onPointerDown={(e: ThreeEvent<PointerEvent>) => {
                 e.stopPropagation();
                 lastPointer.current = e.pointerType;
-                if (e.pointerType === "mouse") onPress(i); // mouse: press on down, like a real key
+                if (e.pointerType === "mouse") {
+                  held.current = i;
+                  onPress(i); // mouse: down on press, up on release, like a real key
+                }
               }}
               onClick={(e: ThreeEvent<MouseEvent>) => {
                 e.stopPropagation();
-                if (lastPointer.current !== "mouse") onPress(i); // touch/pen: only on a tap, not a scroll
+                if (lastPointer.current !== "mouse") onTap(i); // touch/pen: only on a tap, not a scroll
               }}
             >
               <mesh geometry={capGeo} material={caps[i].mat} />

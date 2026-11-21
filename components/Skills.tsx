@@ -9,8 +9,9 @@ import { isTodo, type SkillCategory } from "@/data/types";
 import { Container, SectionHeading } from "@/components/ui";
 import { Reveal } from "@/components/Reveal";
 import { FINE_POINTER, useMediaQuery } from "@/lib/hooks";
-import { inkFor, playThock } from "@/components/skills/keycaps";
-import { use3DCapable, useKeySound } from "@/components/skills/stores";
+import { inkFor } from "@/components/skills/keycaps";
+import { haptic, playKey, preloadProfile, SOUND_PROFILES, type KeyPhase } from "@/components/skills/keySounds";
+import { use3DCapable, useKeySound, useSoundProfile } from "@/components/skills/stores";
 
 const Keyboard3D = dynamic(() => import("@/components/skills/Keyboard3D"), { ssr: false });
 
@@ -23,6 +24,8 @@ const counts = Object.fromEntries(
 
 const filters: Filter[] = ["All", ...skillCategories.filter((c) => skills.some((s) => s.category === c))];
 
+/** Stereo position of a skill key, -1 (left) … 1 (right), from its column in the 6-wide layout. */
+const panFor = (i: number) => ((i % 6) / 5) * 2 - 1;
 
 export function Skills() {
   const [filter, setFilter] = useState<Filter>("All");
@@ -32,6 +35,7 @@ export function Skills() {
   const [visible, setVisible] = useState(false);
   const [ready, setReady] = useState(false);
   const [sound, setSound] = useKeySound();
+  const [profile, setProfile] = useSoundProfile();
   // Server + first hydration render the flat grid; capable devices then switch to 3D.
   // Skills sits below the fold, so that swap happens off-screen.
   const mode = use3DCapable() ? "3d" : "2d";
@@ -56,16 +60,38 @@ export function Skills() {
     };
   }, [mode]);
 
-  const soundRef = useRef(sound);
+  // Latest sound settings for the (stable) press handlers below.
+  const soundRef = useRef({ on: sound, profile });
   useEffect(() => {
-    soundRef.current = sound;
-  }, [sound]);
+    soundRef.current = { on: sound, profile };
+  }, [sound, profile]);
 
-  const press = useCallback((i: number) => {
-    pressTimes.current[i] = performance.now() / 1000;
-    setSelected(i);
-    if (soundRef.current) playThock();
+  const keySound = useCallback((i: number, phase: KeyPhase) => {
+    const { on, profile } = soundRef.current;
+    if (!on) return;
+    playKey(profile, "key", phase, panFor(i));
+    if (phase === "down") haptic();
   }, []);
+
+  /** Key goes down: animate, show its card, play the bottom-out sound. */
+  const press = useCallback(
+    (i: number) => {
+      pressTimes.current[i] = performance.now() / 1000;
+      setSelected(i);
+      keySound(i, "down");
+    },
+    [keySound],
+  );
+  /** Key comes back up: the return sound (a real switch makes two). */
+  const release = useCallback((i: number) => keySound(i, "up"), [keySound]);
+  /** A tap, click or Enter on a button: down, then up a moment later. */
+  const tap = useCallback(
+    (i: number) => {
+      press(i);
+      setTimeout(() => release(i), 90);
+    },
+    [press, release],
+  );
 
   // Real-keyboard shortcuts: desktop only, while the section is on screen, never while typing in a field.
   const sectionVisible = useRef(false);
@@ -85,13 +111,34 @@ export function Skills() {
       const i = skills.findIndex((s) => s.key === e.key.toUpperCase());
       if (i >= 0) press(i);
     };
+    // The real key's release plays the up sound, so fast typing overlaps naturally.
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (!sectionVisible.current) return;
+      const i = skills.findIndex((s) => s.key === e.key.toUpperCase());
+      if (i >= 0) release(i);
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [finePointer, press]);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [finePointer, press, release]);
+
+  /** Plays a sample down/up pair once the profile's sounds are decoded. */
+  const demo = (p: typeof profile) =>
+    preloadProfile(p).then(() => {
+      playKey(p, "key", "down");
+      setTimeout(() => playKey(p, "key", "up"), 90);
+    });
 
   const toggleSound = () => {
     setSound(!sound);
-    if (!sound) playThock(); // audible confirmation (and unlocks audio on this gesture)
+    if (!sound) void demo(profile); // this click also unlocks audio and loads the samples
+  };
+  const chooseProfile = (p: typeof profile) => {
+    setProfile(p);
+    if (sound) void demo(p);
   };
 
   const current = selected !== null ? skills[selected] : null;
@@ -153,15 +200,38 @@ export function Skills() {
         </Reveal>
 
         <div className="relative">
-          <button
-            type="button"
-            onClick={toggleSound}
-            aria-pressed={sound}
-            aria-label={sound ? "Mute key sounds" : "Turn on key sounds"}
-            className="absolute top-0 right-0 z-10 grid size-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition hover:border-white/25 hover:text-white"
-          >
-            {sound ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
-          </button>
+          <div className="absolute top-0 right-0 z-10 flex items-center gap-2">
+            {/* Sound profile picker (radio group), then the mute toggle. */}
+            <div
+              role="radiogroup"
+              aria-label="Key sound"
+              className="flex rounded-full border border-white/10 bg-white/[0.04] p-0.5 text-[11px] font-semibold"
+            >
+              {SOUND_PROFILES.map(({ id, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={profile === id}
+                  onClick={() => chooseProfile(id)}
+                  className={`rounded-full px-2.5 py-1.5 transition-colors ${
+                    profile === id ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={toggleSound}
+              aria-pressed={sound}
+              aria-label={sound ? "Mute key sounds" : "Turn on key sounds"}
+              className="grid size-10 place-items-center rounded-full border border-white/10 bg-white/[0.04] text-slate-300 transition hover:border-white/25 hover:text-white"
+            >
+              {sound ? <Volume2 className="size-4" aria-hidden /> : <VolumeX className="size-4" aria-hidden />}
+            </button>
+          </div>
 
           {mode === "3d" ? (
             <div ref={stageRef} className="relative h-[440px] sm:h-[500px]">
@@ -178,6 +248,8 @@ export function Skills() {
                     focused={focused}
                     pressTimes={pressTimes}
                     onPress={press}
+                    onRelease={release}
+                    onTap={tap}
                     active={visible}
                     compact={compact}
                     onReady={() => setReady(true)}
@@ -195,7 +267,7 @@ export function Skills() {
                       aria-keyshortcuts={finePointer ? s.key : undefined}
                       onFocus={() => setFocused(i)}
                       onBlur={() => setFocused((f) => (f === i ? null : f))}
-                      onClick={() => press(i)}
+                      onClick={() => tap(i)}
                     >
                       {s.name}
                     </button>
@@ -204,7 +276,7 @@ export function Skills() {
               </ul>
             </div>
           ) : (
-            <FlatKeys dimmed={dimmed} selected={selected} onPress={press} />
+            <FlatKeys dimmed={dimmed} selected={selected} onPress={tap} />
           )}
 
           <InfoCard skill={current} />
