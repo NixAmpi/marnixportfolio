@@ -271,6 +271,8 @@ export function Skills() {
                     dimmed={dimmed}
                     focused={focused}
                     keyTimes={keyTimes}
+                    soundOn={sound}
+                    onKnob={toggleSound}
                     profile={profile}
                     onPress={press}
                     onRelease={release}

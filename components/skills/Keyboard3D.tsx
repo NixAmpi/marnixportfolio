@@ -6,7 +6,7 @@
  */
 
 import * as THREE from "three";
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer, useTexture } from "@react-three/drei";
 import { ResumeLoop } from "@/components/effects/ResumeLoop";
@@ -15,6 +15,7 @@ import type { SoundProfile } from "./keySounds";
 import { LAYOUTS, type KeyTimes, type LayoutKey } from "./layout";
 import { U, keycapGeometry } from "./keyboard/geometry";
 import { buildLegends, MOD_COLOR } from "./keyboard/legends";
+import { KeyboardCase, TYPING_ANGLE, type CaseBox } from "./keyboard/Case";
 import { keycapMaterial } from "./keyboard/materials";
 
 export type KeyboardProps = {
@@ -36,9 +37,14 @@ export type KeyboardProps = {
   onReady?: () => void;
   /** Sound profile — also picks the switch stem colour, like real switches. */
   profile: SoundProfile;
+  soundOn: boolean;
+  /** The case knob was clicked (toggles sound). */
+  onKnob: () => void;
 };
 
-const BEZEL = 0.45;
+const BEZEL = 0.34; // rim around the plate
+const PLATE_MARGIN = 0.12; // plate beyond the outermost caps
+const KNOB_ZONE = 0.75; // extra rim at the back for the knob (desktop)
 const CAP_REST_Y = 0.48; // cap underside above the plate: switch + a visible stem
 const TRAVEL = 0.2; // ≈ 4 mm of travel; fully down, the cap stops just above the housing
 /** Switch housing (plate-mounted) and stem, in plate-top coordinates. */
@@ -105,11 +111,18 @@ type CapClass = {
   glow: THREE.InstancedBufferAttribute;
 };
 
-function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, compact, onReady, profile }: KeyboardProps) {
+function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, compact, onReady, profile, soundOn, onKnob }: KeyboardProps) {
   const layout = compact ? LAYOUTS.compact : LAYOUTS.desktop;
   const sculpt = compact ? SCULPT.compact : SCULPT.desktop;
-  const plateW = layout.cols * U + BEZEL * 2;
-  const plateD = layout.rows * U + BEZEL * 2;
+  // Footprints in deck space: keys centred on the origin; the case adds a rim (and a knob zone).
+  const { plate, box } = useMemo(() => {
+    const hx = (layout.cols * U) / 2 + PLATE_MARGIN;
+    const hz = (layout.rows * U) / 2 + PLATE_MARGIN;
+    const plate: CaseBox = { minX: -hx, maxX: hx, minZ: -hz, maxZ: hz };
+    const box: CaseBox = { minX: -hx - BEZEL, maxX: hx + BEZEL, minZ: -hz - BEZEL - (compact ? 0 : KNOB_ZONE), maxZ: hz + BEZEL };
+    return { plate, box };
+  }, [layout, compact]);
+  const [tableY, setTableY] = useState(-0.7);
 
   const logos = useTexture(skills.map((s) => s.logo));
   const legends = useMemo(
@@ -279,27 +292,36 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
     }
   });
 
+  const setCursor = (pointer: boolean) => {
+    const el = gl.domElement;
+    el.style.setProperty("cursor", pointer ? "pointer" : "");
+    if (pointer) el.setAttribute("data-cursor", "hover"); // grows the custom cursor ring
+    else el.removeAttribute("data-cursor");
+  };
   const setHover = (slot: number | null) => {
     hovered.current = slot;
-    const el = gl.domElement;
-    el.style.setProperty("cursor", slot === null ? "" : "pointer");
-    if (slot === null) el.removeAttribute("data-cursor");
-    else el.setAttribute("data-cursor", "hover"); // grows the custom cursor ring
+    setCursor(slot !== null);
   };
   const slotOf = (ci: number, e: ThreeEvent<PointerEvent | MouseEvent>) =>
     e.instanceId === undefined ? null : classes[ci].keys[e.instanceId].slot;
 
   return (
     <>
-      <FitCamera width={plateW} depth={plateD} />
+      <FitCamera width={box.maxX - box.minX} depth={box.maxZ - box.minZ} />
       <group rotation={[0, YAW, 0]}>
-        <ContactShadows position={[0, -0.5, 0]} scale={Math.max(plateW, plateD) * 1.7} blur={2.6} opacity={0.55} far={2} frames={1} />
+        <ContactShadows position={[0, tableY - 0.02, 0]} scale={Math.max(box.maxX - box.minX, box.maxZ - box.minZ) * 1.6} blur={2.4} opacity={0.6} far={1.5} frames={1} />
         <group ref={floatRef}>
-          {/* Plate (replaced by the full case in a later step) */}
-          <mesh position={[0, -0.2, 0]}>
-            <boxGeometry args={[plateW, 0.4, plateD]} />
-            <meshPhysicalMaterial color="#12142a" roughness={0.55} metalness={0.35} />
-          </mesh>
+          {/* Deck: tilted to the typing angle; y=0 is the plate top. */}
+          <group rotation={[TYPING_ANGLE, 0, 0]}>
+          <KeyboardCase
+            box={box}
+            plate={plate}
+            detailed={!compact}
+            soundOn={soundOn}
+            onKnob={onKnob}
+            onKnobHover={(h) => setCursor(h)}
+            onTableY={setTableY}
+          />
           {/* Switches: dark base, translucent milky top, coloured stem */}
           <instancedMesh
             ref={(el) => {
@@ -352,6 +374,7 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
               }}
             />
           ))}
+          </group>
         </group>
       </group>
     </>
