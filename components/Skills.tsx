@@ -12,6 +12,7 @@ import { FINE_POINTER, useMediaQuery } from "@/lib/hooks";
 import { inkFor } from "@/components/skills/keycaps";
 import { haptic, playKey, preloadProfile, SOUND_PROFILES, type KeyPhase } from "@/components/skills/keySounds";
 import { use3DCapable, useKeySound, useSoundProfile } from "@/components/skills/stores";
+import { createKeyTimes, LAYOUTS, modSlot, panForSlot, type ModifierId } from "@/components/skills/layout";
 
 const Keyboard3D = dynamic(() => import("@/components/skills/Keyboard3D"), { ssr: false });
 
@@ -24,8 +25,11 @@ const counts = Object.fromEntries(
 
 const filters: Filter[] = ["All", ...skillCategories.filter((c) => skills.some((s) => s.category === c))];
 
-/** Stereo position of a skill key, -1 (left) … 1 (right), from its column in the 6-wide layout. */
-const panFor = (i: number) => ((i % 6) / 5) * 2 - 1;
+/** Sound family per slot: skills are normal keys; Enter/Shift are large; the spacebar has its own. */
+const soundForSlot = new Map(LAYOUTS.desktop.keys.map((k) => [k.slot, k.sound]));
+
+/** Real keys that animate their modifier keycap (Space is left alone: it scrolls the page). */
+const HOTKEY_MODS: Record<string, ModifierId> = { Enter: "enter", Shift: "shift" };
 
 export function Skills() {
   const [filter, setFilter] = useState<Filter>("All");
@@ -39,7 +43,7 @@ export function Skills() {
   // Server + first hydration render the flat grid; capable devices then switch to 3D.
   // Skills sits below the fold, so that swap happens off-screen.
   const mode = use3DCapable() ? "3d" : "2d";
-  const pressTimes = useRef(new Float64Array(skills.length).fill(-10));
+  const keyTimes = useRef(createKeyTimes());
   const stageRef = useRef<HTMLDivElement>(null);
   const finePointer = useMediaQuery(FINE_POINTER);
   const compact = useMediaQuery("(max-width: 767px)");
@@ -66,24 +70,35 @@ export function Skills() {
     soundRef.current = { on: sound, profile };
   }, [sound, profile]);
 
-  const keySound = useCallback((i: number, phase: KeyPhase) => {
+  const compactRef = useRef(compact);
+  useEffect(() => {
+    compactRef.current = compact;
+  }, [compact]);
+
+  const keySound = useCallback((slot: number, phase: KeyPhase) => {
     const { on, profile } = soundRef.current;
     if (!on) return;
-    playKey(profile, "key", phase, panFor(i));
+    playKey(profile, soundForSlot.get(slot) ?? "key", phase, panForSlot(slot, compactRef.current));
     if (phase === "down") haptic();
   }, []);
 
-  /** Key goes down: animate, show its card, play the bottom-out sound. */
+  /** A key (skill or modifier slot) goes down: animate, show a skill's card, play the bottom-out. */
   const press = useCallback(
-    (i: number) => {
-      pressTimes.current[i] = performance.now() / 1000;
-      setSelected(i);
-      keySound(i, "down");
+    (slot: number) => {
+      keyTimes.current.down[slot] = performance.now() / 1000;
+      if (slot < skills.length) setSelected(slot);
+      keySound(slot, "down");
     },
     [keySound],
   );
-  /** Key comes back up: the return sound (a real switch makes two). */
-  const release = useCallback((i: number) => keySound(i, "up"), [keySound]);
+  /** The key comes back up: springs back and plays the return sound (a real switch makes two). */
+  const release = useCallback(
+    (slot: number) => {
+      keyTimes.current.up[slot] = performance.now() / 1000;
+      keySound(slot, "up");
+    },
+    [keySound],
+  );
   /** A tap, click or Enter on a button: down, then up a moment later. */
   const tap = useCallback(
     (i: number) => {
@@ -108,12 +123,21 @@ export function Skills() {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || !sectionVisible.current) return;
       const t = e.target as HTMLElement | null;
       if (t?.closest("input, textarea, select, [contenteditable='true']")) return;
+      const mod = HOTKEY_MODS[e.key];
+      // Enter on a focused button/link activates it instead — don't also animate the cap.
+      if (mod && !(mod === "enter" && t?.closest("button, a, [role=button]"))) return press(modSlot(mod));
       const i = skills.findIndex((s) => s.key === e.key.toUpperCase());
       if (i >= 0) press(i);
     };
     // The real key's release plays the up sound, so fast typing overlaps naturally.
     const onKeyUp = (e: KeyboardEvent) => {
       if (!sectionVisible.current) return;
+      const mod = HOTKEY_MODS[e.key];
+      if (mod) {
+        const slot = modSlot(mod);
+        if (keyTimes.current.up[slot] < keyTimes.current.down[slot]) release(slot);
+        return;
+      }
       const i = skills.findIndex((s) => s.key === e.key.toUpperCase());
       if (i >= 0) release(i);
     };
@@ -246,7 +270,7 @@ export function Skills() {
                     skills={skills}
                     dimmed={dimmed}
                     focused={focused}
-                    pressTimes={pressTimes}
+                    keyTimes={keyTimes}
                     onPress={press}
                     onRelease={release}
                     onTap={tap}
