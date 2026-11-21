@@ -271,6 +271,7 @@ export function Skills() {
                     dimmed={dimmed}
                     focused={focused}
                     keyTimes={keyTimes}
+                    profile={profile}
                     onPress={press}
                     onRelease={release}
                     onTap={tap}

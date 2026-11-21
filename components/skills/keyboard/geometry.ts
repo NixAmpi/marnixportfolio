@@ -3,7 +3,7 @@ import * as THREE from "three";
 /** Size of 1u in world units. Caps are a little smaller so gaps show the switches. */
 export const U = 1;
 export const CAP = {
-  gap: 0.1, // between neighbouring caps
+  gap: 0.14, // between neighbouring caps (wide enough to see the switches)
   height: 0.5, // base → top edge (before per-row sculpting)
   topInset: 0.11, // how much narrower the top is on each side (OEM taper)
   dish: 0.035, // depth of the cylindrical dish

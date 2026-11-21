@@ -11,6 +11,7 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { ContactShadows, Environment, Lightformer, useTexture } from "@react-three/drei";
 import { ResumeLoop } from "@/components/effects/ResumeLoop";
 import type { Skill } from "@/data/types";
+import type { SoundProfile } from "./keySounds";
 import { LAYOUTS, type KeyTimes, type LayoutKey } from "./layout";
 import { U, keycapGeometry } from "./keyboard/geometry";
 import { buildLegends, MOD_COLOR } from "./keyboard/legends";
@@ -33,11 +34,16 @@ export type KeyboardProps = {
   active: boolean;
   compact: boolean;
   onReady?: () => void;
+  /** Sound profile — also picks the switch stem colour, like real switches. */
+  profile: SoundProfile;
 };
 
 const BEZEL = 0.45;
-const CAP_REST_Y = 0.26; // cap underside above the plate (room for the switch)
-const TRAVEL = 0.22; // ≈ 4 mm of key travel on an 18 mm cap
+const CAP_REST_Y = 0.48; // cap underside above the plate: switch + a visible stem
+const TRAVEL = 0.2; // ≈ 4 mm of travel; fully down, the cap stops just above the housing
+/** Switch housing (plate-mounted) and stem, in plate-top coordinates. */
+const SWITCH = { base: 0.12, top: 0.1, stemBase: 0.16, size: 0.7 }; // MX-style: housing ≈ 78% of the cap
+const STEM_COLOR: Record<SoundProfile, string> = { thocky: "#d9a55b", clacky: "#e5484d", clicky: "#3b82f6" };
 const YAW = THREE.MathUtils.degToRad(-30);
 const ELEVATION = THREE.MathUtils.degToRad(60); // camera 30° off straight-down
 const FOV = 26;
@@ -99,7 +105,7 @@ type CapClass = {
   glow: THREE.InstancedBufferAttribute;
 };
 
-function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, compact, onReady }: KeyboardProps) {
+function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, compact, onReady, profile }: KeyboardProps) {
   const layout = compact ? LAYOUTS.compact : LAYOUTS.desktop;
   const sculpt = compact ? SCULPT.compact : SCULPT.desktop;
   const plateW = layout.cols * U + BEZEL * 2;
@@ -140,6 +146,42 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
     () => ({ m: new THREE.Matrix4(), p: new THREE.Vector3(), q: new THREE.Quaternion(), s: new THREE.Vector3(), e: new THREE.Euler(), c: new THREE.Color(), dark: new THREE.Color("#14151d") }),
     [],
   );
+  // Switches: one under every cap, plus two stabilizers under the spacebar.
+  const switches = useMemo(
+    () =>
+      layout.keys.flatMap((k) => {
+        const x = (k.x - layout.cols / 2) * U;
+        const z = (k.row - (layout.rows - 1) / 2) * U;
+        const stab = k.mod === "space" ? (k.w / 2 - 0.55) * U : 0;
+        return (stab ? [0, -stab, stab] : [0]).map((dx) => ({ slot: k.slot, row: k.row, x: x + dx, z }));
+      }),
+    [layout],
+  );
+  const switchGeo = useMemo(
+    () => ({
+      base: new THREE.BoxGeometry(SWITCH.size, SWITCH.base, SWITCH.size).translate(0, SWITCH.base / 2, 0),
+      top: new THREE.BoxGeometry(SWITCH.size * 0.86, SWITCH.top, SWITCH.size * 0.86).translate(0, SWITCH.base + SWITCH.top / 2, 0),
+      // Unit-height stem scaled each frame to reach the cap's underside.
+      stem: new THREE.BoxGeometry(0.13, 1, 0.13).translate(0, 0.5, 0),
+    }),
+    [],
+  );
+  const stemMat = useMemo(() => new THREE.MeshStandardMaterial({ color: STEM_COLOR.thocky, roughness: 0.45 }), []);
+  useEffect(() => {
+    stemMat.color.set(STEM_COLOR[profile]);
+  }, [stemMat, profile]);
+  const housingRefs = useRef<(THREE.InstancedMesh | null)[]>([]);
+  const stemRef = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const m = new THREE.Matrix4();
+    for (const mesh of housingRefs.current) {
+      if (!mesh) continue;
+      switches.forEach((sw, i) => mesh.setMatrixAt(i, m.makeTranslation(sw.x, 0, sw.z)));
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
+  }, [switches]);
+
   const baseColors = useMemo(
     () => new Map(layout.keys.map((k) => [k.slot, new THREE.Color(k.skill !== null ? skills[k.skill].color : MOD_COLOR)])),
     [layout, skills],
@@ -152,10 +194,12 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
   useEffect(
     () => () => {
       classes.forEach((c) => c.geometry.dispose());
+      Object.values(switchGeo).forEach((g) => g.dispose());
+      stemMat.dispose();
       material.dispose();
       legends.texture.dispose();
     },
-    [classes, material, legends],
+    [classes, material, legends, switchGeo, stemMat],
   );
 
   // A mouse press is released wherever the button comes up, even off the key.
@@ -211,6 +255,22 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
       if (!mesh.boundingSphere) mesh.computeBoundingSphere();
     });
 
+    // Stems: top stays under the cap, so they visibly compress as the key travels.
+    const stems = stemRef.current;
+    if (stems) {
+      switches.forEach((sw, i) => {
+        const travel = travelAt(now, times.down[sw.slot], times.up[sw.slot]) * TRAVEL;
+        const a = anim.current.get(sw.slot);
+        const capBottom = CAP_REST_Y - travel + (a?.lift ?? 0) - (a?.dim ?? 0) * 0.08;
+        p.set(sw.x, SWITCH.stemBase, sw.z);
+        q.identity();
+        s.set(1, Math.max(0.02, capBottom - SWITCH.stemBase + 0.04), 1);
+        stems.setMatrixAt(i, m.compose(p, q, s));
+      });
+      stems.instanceMatrix.needsUpdate = true;
+      if (!stems.boundingSphere) stems.computeBoundingSphere();
+    }
+
     const f = floatRef.current;
     if (f) {
       f.position.y = Math.sin(state.clock.elapsedTime * 0.9) * 0.06;
@@ -240,6 +300,26 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
             <boxGeometry args={[plateW, 0.4, plateD]} />
             <meshPhysicalMaterial color="#12142a" roughness={0.55} metalness={0.35} />
           </mesh>
+          {/* Switches: dark base, translucent milky top, coloured stem */}
+          <instancedMesh
+            ref={(el) => {
+              housingRefs.current[0] = el;
+            }}
+            args={[switchGeo.base, undefined, switches.length]}
+            frustumCulled={false}
+          >
+            <meshStandardMaterial color="#26283a" roughness={0.45} />
+          </instancedMesh>
+          <instancedMesh
+            ref={(el) => {
+              housingRefs.current[1] = el;
+            }}
+            args={[switchGeo.top, undefined, switches.length]}
+            frustumCulled={false}
+          >
+            <meshPhysicalMaterial color="#eef1ff" emissive="#8a90b8" emissiveIntensity={0.25} roughness={0.25} transparent opacity={0.72} depthWrite={false} />
+          </instancedMesh>
+          <instancedMesh ref={stemRef} args={[switchGeo.stem, stemMat, switches.length]} frustumCulled={false} />
           {classes.map((cls, ci) => (
             <instancedMesh
               key={cls.width}
