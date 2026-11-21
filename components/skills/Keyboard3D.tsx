@@ -16,6 +16,7 @@ import { LAYOUTS, type KeyTimes, type LayoutKey } from "./layout";
 import { U, keycapGeometry } from "./keyboard/geometry";
 import { buildLegends, MOD_COLOR } from "./keyboard/legends";
 import { KeyboardCase, TYPING_ANGLE, type CaseBox } from "./keyboard/Case";
+import { FloorGlow, UnderglowStrip } from "./keyboard/Glow";
 import { keycapMaterial } from "./keyboard/materials";
 
 export type KeyboardProps = {
@@ -195,6 +196,39 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
     }
   }, [switches]);
 
+  // Per-key RGB: a soft light pool on the plate under each key that flashes on press.
+  const keyGlow = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 128;
+    const g = c.getContext("2d")!;
+    const grad = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 128, 128);
+    const map = new THREE.CanvasTexture(c);
+    return {
+      geometry: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+      material: new THREE.MeshBasicMaterial({ map, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }),
+      map,
+    };
+  }, []);
+  const keyGlowRef = useRef<THREE.InstancedMesh>(null);
+  const glowIndex = useMemo(() => new Map(layout.keys.map((k, i) => [k.slot, i])), [layout]);
+  useLayoutEffect(() => {
+    const mesh = keyGlowRef.current;
+    if (!mesh) return;
+    const m = new THREE.Matrix4();
+    const black = new THREE.Color(0);
+    layout.keys.forEach((k, i) => {
+      m.makeScale(k.w * U * 1.15, 1, U * 1.15).setPosition((k.x - layout.cols / 2) * U, 0.006, (k.row - (layout.rows - 1) / 2) * U);
+      mesh.setMatrixAt(i, m);
+      mesh.setColorAt(i, black);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, [layout]);
+
   const baseColors = useMemo(
     () => new Map(layout.keys.map((k) => [k.slot, new THREE.Color(k.skill !== null ? skills[k.skill].color : MOD_COLOR)])),
     [layout, skills],
@@ -208,11 +242,14 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
     () => () => {
       classes.forEach((c) => c.geometry.dispose());
       Object.values(switchGeo).forEach((g) => g.dispose());
+      keyGlow.geometry.dispose();
+      keyGlow.material.dispose();
+      keyGlow.map.dispose();
       stemMat.dispose();
       material.dispose();
       legends.texture.dispose();
     },
-    [classes, material, legends, switchGeo, stemMat],
+    [classes, material, legends, switchGeo, stemMat, keyGlow],
   );
 
   // A mouse press is released wherever the button comes up, even off the key.
@@ -260,6 +297,7 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
         mesh.setColorAt(i, c.copy(baseColors.get(key.slot)!).lerp(dark, a.dim * 0.7));
         cls.dim.setX(i, a.dim);
         cls.glow.setX(i, Math.min(1, a.glow * 0.5 + flash));
+        keyGlowRef.current?.setColorAt(glowIndex.get(key.slot)!, c.copy(baseColors.get(key.slot)!).multiplyScalar(flash * 1.6));
       });
       mesh.instanceMatrix.needsUpdate = true;
       if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
@@ -267,6 +305,8 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
       cls.glow.needsUpdate = true;
       if (!mesh.boundingSphere) mesh.computeBoundingSphere();
     });
+    const kg = keyGlowRef.current;
+    if (kg?.instanceColor) kg.instanceColor.needsUpdate = true;
 
     // Stems: top stays under the cap, so they visibly compress as the key travels.
     const stems = stemRef.current;
@@ -310,6 +350,7 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
       <FitCamera width={box.maxX - box.minX} depth={box.maxZ - box.minZ} />
       <group rotation={[0, YAW, 0]}>
         <ContactShadows position={[0, tableY - 0.02, 0]} scale={Math.max(box.maxX - box.minX, box.maxZ - box.minZ) * 1.6} blur={2.4} opacity={0.6} far={1.5} frames={1} />
+        <FloorGlow box={box} keyTimes={keyTimes} tableY={tableY} />
         <group ref={floatRef}>
           {/* Deck: tilted to the typing angle; y=0 is the plate top. */}
           <group rotation={[TYPING_ANGLE, 0, 0]}>
@@ -322,6 +363,8 @@ function Board({ skills, dimmed, focused, keyTimes, onPress, onRelease, onTap, c
             onKnobHover={(h) => setCursor(h)}
             onTableY={setTableY}
           />
+          <UnderglowStrip box={box} keyTimes={keyTimes} />
+          <instancedMesh ref={keyGlowRef} args={[keyGlow.geometry, keyGlow.material, layout.keys.length]} frustumCulled={false} renderOrder={1} />
           {/* Switches: dark base, translucent milky top, coloured stem */}
           <instancedMesh
             ref={(el) => {

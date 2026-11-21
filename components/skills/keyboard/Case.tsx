@@ -32,14 +32,18 @@ function roundedShape(w: number, h: number, r: number, cx = 0, cy = 0, path: THR
  * Case body, in deck space (the deck group is tilted by TYPING_ANGLE; deck y=0 is the plate top).
  * The top is flat in deck space; the bottom is slanted so it sits flat on the table in world space.
  */
+/** Deck-space y of the case bottom at depth z (the bottom is flat in world space). */
+export function caseBottomAt(box: CaseBox) {
+  const cos = Math.cos(TYPING_ANGLE);
+  const sin = Math.sin(TYPING_ANGLE);
+  const yB = -(FRONT_THICKNESS + PLATE_T) * cos - box.maxZ * sin;
+  return (z: number) => (yB + z * sin) / cos;
+}
+
 function caseBodyGeometry(box: CaseBox) {
   const W = box.maxX - box.minX;
   const bevel = 0.07;
-  const cos = Math.cos(TYPING_ANGLE);
-  const sin = Math.sin(TYPING_ANGLE);
-  // World-flat bottom expressed in deck space: y = (yB + z·sin) / cos.
-  const yB = -(FRONT_THICKNESS + PLATE_T) * cos - box.maxZ * sin;
-  const bottomAt = (z: number) => (yB + z * sin) / cos;
+  const bottomAt = caseBottomAt(box);
   const top = -PLATE_T;
   // Profile in (sx = -z, sy = y), corners lightly rounded.
   const r = 0.1;
